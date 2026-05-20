@@ -1,5 +1,12 @@
 # SecretShift
 
+[![CI](https://github.com/PapaDanielVi/secret-shift/actions/workflows/test.yml/badge.svg)](https://github.com/PapaDanielVi/secret-shift/actions/workflows/test.yml)
+[![Lint](https://github.com/PapaDanielVi/secret-shift/actions/workflows/lint.yml/badge.svg)](https://github.com/PapaDanielVi/secret-shift/actions/workflows/lint.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/PapaDanielVi/secret-shift)](https://goreportcard.com/report/github.com/PapaDanielVi/secret-shift)
+[![GitHub release](https://img.shields.io/github/v/release/PapaDanielVi/secret-shift)](https://github.com/PapaDanielVi/secret-shift/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Go Reference](https://pkg.go.dev/badge/github.com/PapaDanielVi/secret-shift.svg)](https://pkg.go.dev/github.com/PapaDanielVi/secret-shift)
+
 SecretShift is a CLI tool for migrating and syncing secrets and environment variables between providers. Move secrets from GitHub, GitLab, HashiCorp Vault, etcd, or Kubernetes to any of those destinations — or to a local file.
 
 ## Features
@@ -13,7 +20,26 @@ SecretShift is a CLI tool for migrating and syncing secrets and environment vari
 
 ## Installation
 
+### Homebrew (macOS & Linux)
+
 ```bash
+brew tap PapaDanielVi/tap
+brew install secret-shift
+```
+
+### From Source
+
+```bash
+go build -o secret-shift .
+```
+
+### From Release
+
+Download the source zip from the [releases page](https://github.com/PapaDanielVi/secret-shift/releases), extract, and build:
+
+```bash
+unzip secret-shift-v*-source.zip
+cd secret-shift-*/
 go build -o secret-shift .
 ```
 
@@ -82,6 +108,10 @@ Execute a sync pipeline.
 | `--frequency` | `5m` | Interval between syncs (e.g. `1m`, `1h`) |
 | `--cron` | | Cron expression (e.g. `*/5 * * * *`) |
 
+### `secret-shift version`
+
+Print the current version.
+
 ### `secret-shift tui`
 
 Interactive terminal wizard that walks through source, processing, and destination configuration, then runs the sync.
@@ -129,13 +159,19 @@ For destinations that support it (GitHub, GitLab):
 
 ```
 secret-shift/
-  cmd/                  # CLI commands (root, sync, tui)
+  cmd/                    # CLI commands (root, sync, tui, version)
   internal/
-    config/             # Config loading and validation
-    pipeline/           # Sync pipeline (source → process → destination)
-    source/             # Source implementations (github, gitlab, vault, etcd, kubernetes)
-    destination/        # Destination implementations (file, github, gitlab, vault, etcd, kubernetes)
-    tui/                # Bubble Tea interactive TUI
+    config/               # Config loading and validation
+    pipeline/             # Sync pipeline (source → process → destination)
+    provider/             # Unified provider implementations
+      github/             # GitHub source + destination
+      gitlab/             # GitLab source + destination
+      vault/              # HashiCorp Vault source + destination
+      etcd/               # etcd source + destination
+      kubernetes/         # Kubernetes source + destination
+    source/               # Source interface (alias to provider.Secret)
+    destination/          # Destination interface + file destination
+    tui/                  # Bubble Tea interactive TUI
 ```
 
 ## Dependencies

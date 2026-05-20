@@ -1,12 +1,12 @@
 package source
 
-import "context"
+import (
+	"context"
 
-type Secret struct {
-	Name  string
-	Value string
-	Type  string // "env" or "secret"
-}
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
+)
+
+type Secret = provider.Secret
 
 type Source interface {
 	Read(ctx context.Context) ([]Secret, error)

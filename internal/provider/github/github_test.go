@@ -39,15 +39,15 @@ func setupMockServer(secretNames []string, variables []*github.ActionsVariable) 
 	}))
 }
 
-func newTestSource(serverURL string) *Source {
-	src := &Source{
+func newTestProvider(serverURL string) *Provider {
+	p := &Provider{
 		client: github.NewClient(nil),
 		owner:  "owner",
 		repo:   "repo",
 	}
 	u, _ := url.Parse(serverURL + "/")
-	src.client.BaseURL = u
-	return src
+	p.client.BaseURL = u
+	return p
 }
 
 func TestRead_SecretsAndVariables(t *testing.T) {
@@ -58,9 +58,9 @@ func TestRead_SecretsAndVariables(t *testing.T) {
 	server := setupMockServer([]string{"API_KEY", "DB_PASSWORD"}, vars)
 	defer server.Close()
 
-	src := newTestSource(server.URL)
+	p := newTestProvider(server.URL)
 
-	secrets, err := src.Read(context.Background())
+	secrets, err := p.Read(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -91,9 +91,9 @@ func TestRead_Empty(t *testing.T) {
 	server := setupMockServer(nil, nil)
 	defer server.Close()
 
-	src := newTestSource(server.URL)
+	p := newTestProvider(server.URL)
 
-	secrets, err := src.Read(context.Background())
+	secrets, err := p.Read(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -109,9 +109,9 @@ func TestRead_VariableValues(t *testing.T) {
 	server := setupMockServer(nil, vars)
 	defer server.Close()
 
-	src := newTestSource(server.URL)
+	p := newTestProvider(server.URL)
 
-	secrets, err := src.Read(context.Background())
+	secrets, err := p.Read(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

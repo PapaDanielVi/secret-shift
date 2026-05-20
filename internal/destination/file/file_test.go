@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/PapaDanielVi/secret-shift/internal/source"
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 )
 
 func TestWrite_JSON(t *testing.T) {
@@ -14,7 +14,7 @@ func TestWrite_JSON(t *testing.T) {
 	path := filepath.Join(dir, "secrets.json")
 
 	d := New(path, "json", false, "")
-	secrets := []source.Secret{
+	secrets := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "API_KEY", Value: "abc123", Type: "secret"},
 	}
@@ -47,7 +47,7 @@ func TestWrite_YAML(t *testing.T) {
 	path := filepath.Join(dir, "secrets.yaml")
 
 	d := New(path, "yaml", false, "")
-	secrets := []source.Secret{
+	secrets := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 	}
 
@@ -71,7 +71,7 @@ func TestWrite_Encrypted(t *testing.T) {
 	path := filepath.Join(dir, "secrets.enc")
 
 	d := New(path, "json", true, "my-secret-key-32-chars-long!!")
-	secrets := []source.Secret{
+	secrets := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "API_KEY", Value: "abc123", Type: "secret"},
 	}
@@ -110,7 +110,7 @@ func TestWrite_CreatesDirectories(t *testing.T) {
 	path := filepath.Join(dir, "subdir", "deep", "secrets.json")
 
 	d := New(path, "json", false, "")
-	secrets := []source.Secret{
+	secrets := []provider.Secret{
 		{Name: "KEY", Value: "val", Type: "env"},
 	}
 

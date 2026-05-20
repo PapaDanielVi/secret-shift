@@ -3,9 +3,9 @@ package destination
 import (
 	"context"
 
-	"github.com/PapaDanielVi/secret-shift/internal/source"
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 )
 
 type Destination interface {
-	Write(ctx context.Context, secrets []source.Secret) error
+	Write(ctx context.Context, secrets []provider.Secret) error
 }

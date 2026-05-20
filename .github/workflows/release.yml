@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+
+      - name: Run tests
+        run: go test -race ./...
+
+      - name: Zip source code
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          zip -r "secret-shift-${VERSION}-source.zip" \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "coverage.out" \
+            --exclude "*.test" \
+            .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "secret-shift-*-source.zip"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update Homebrew formula
+        uses: dawidd6/action-homebrew-bump-formula@v3
+        with:
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          formula: secret-shift
+          tap: PapaDanielVi/homebrew-tap
+          tag: ${{ github.ref_name }}

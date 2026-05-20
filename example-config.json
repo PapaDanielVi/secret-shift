@@ -1,0 +1,53 @@
+{
+  "source": {
+    "type": "github",
+    "repo": "owner/repo",
+    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "token_env": "GITHUB_TOKEN",
+    "url": "https://api.github.com",
+    "project_id": "12345",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "myapp/config",
+    "vault_mount": "secret",
+    "etcd_endpoints": ["http://localhost:2379"],
+    "etcd_prefix": "/myapp/",
+    "etcd_username": "root",
+    "etcd_password": "password",
+    "kube_namespace": "default",
+    "kube_secret_name": "my-secret",
+    "kube_config": "~/.kube/config",
+    "kube_label": "app=myapp"
+  },
+  "process": {
+    "add_prefix": "PROD_",
+    "add_suffix": "_V2",
+    "include_regex": "^DB_",
+    "exclude_regex": "^TEMP_",
+    "include_types": ["env", "secret"],
+    "exclude_types": ["env"]
+  },
+  "destination": {
+    "type": "github",
+    "path": "./output/secrets.json",
+    "format": "json",
+    "repo": "owner/dest-repo",
+    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "token_env": "GITHUB_TOKEN",
+    "url": "https://api.github.com",
+    "project_id": "67890",
+    "conflict_strategy": "replace",
+    "encrypt": false,
+    "encrypt_key": "my-encryption-key",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "myapp/config",
+    "vault_mount": "secret",
+    "etcd_endpoints": ["http://localhost:2379"],
+    "etcd_prefix": "/myapp/",
+    "etcd_username": "root",
+    "etcd_password": "password",
+    "kube_namespace": "default",
+    "kube_secret_name": "my-secret",
+    "kube_config": "~/.kube/config",
+    "kube_label": "app=myapp"
+  }
+}

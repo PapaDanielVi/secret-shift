@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/PapaDanielVi/secret-shift/internal/source"
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,7 +32,7 @@ func New(path, format string, encrypt bool, encryptKey string) *Destination {
 	}
 }
 
-func (d *Destination) Write(ctx context.Context, secrets []source.Secret) error {
+func (d *Destination) Write(ctx context.Context, secrets []provider.Secret) error {
 	if err := os.MkdirAll(filepath.Dir(d.path), 0755); err != nil {
 		return fmt.Errorf("create directory: %w", err)
 	}
