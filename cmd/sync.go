@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const defaultSyncFrequency = 5 * time.Minute
+
 var (
 	periodically bool
 	frequency    time.Duration
@@ -65,7 +67,7 @@ var syncCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(syncCmd)
 	syncCmd.Flags().BoolVar(&periodically, "periodically", false, "run sync periodically")
-	syncCmd.Flags().DurationVar(&frequency, "frequency", 5*time.Minute, "sync frequency (e.g. 1m, 10m, 1h)")
+	syncCmd.Flags().DurationVar(&frequency, "frequency", defaultSyncFrequency, "sync frequency (e.g. 1m, 10m, 1h)")
 	syncCmd.Flags().StringVar(&cronExpr, "cron", "", "cron expression for scheduling (e.g. \"*/5 * * * *\")")
 }
 

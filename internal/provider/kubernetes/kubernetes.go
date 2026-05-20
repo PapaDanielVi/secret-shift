@@ -147,7 +147,7 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 	return nil
 }
 
-func (p *Provider) writeSecret(ctx context.Context, data map[string]string) error {
+func (p *Provider) writeSecret(ctx context.Context, data map[string]string) error { //nolint:dupl
 	name := p.secretName
 	if name == "" {
 		name = "secret-shift-import"
@@ -184,7 +184,7 @@ func (p *Provider) writeSecret(ctx context.Context, data map[string]string) erro
 	return nil
 }
 
-func (p *Provider) writeConfigMap(ctx context.Context, data map[string]string) error {
+func (p *Provider) writeConfigMap(ctx context.Context, data map[string]string) error { //nolint:dupl
 	name := p.secretName
 	if name == "" {
 		name = "secret-shift-import"

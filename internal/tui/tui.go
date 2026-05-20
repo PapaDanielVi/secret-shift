@@ -1,6 +1,8 @@
+// Package tui provides an interactive terminal UI for configuring secret sync.
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -65,7 +67,6 @@ type model struct {
 	inputs   []textinput.Model
 	cursor   int
 	choices  []string
-	err      error
 	result   string
 	quitting bool
 }
@@ -94,9 +95,9 @@ func Run() (*config.Config, error) {
 		return nil, fmt.Errorf("run tui: %w", err)
 	}
 
-	final := m.(model)
+	final := m.(model) //nolint:errcheck
 	if final.quitting && final.result == "" {
-		return nil, fmt.Errorf("TUI cancelled")
+		return nil, errors.New("TUI cancelled")
 	}
 
 	if err := final.cfg.Validate(); err != nil {
@@ -182,11 +183,12 @@ func (m model) isBridgeState() bool {
 	switch m.state {
 	case stateSourceDone, stateProcessDone, stateDestDone:
 		return true
+	default:
 	}
 	return false
 }
 
-func (m model) handleEnter() (tea.Model, tea.Cmd) {
+func (m model) handleEnter() (tea.Model, tea.Cmd) { //nolint:gocyclo,cyclop,funlen
 	switch m.state {
 	case stateSourceType:
 		m.cfg.Source.Type = sourceTypes[m.cursor]
@@ -451,7 +453,7 @@ func (m model) nextDestState() state {
 	}
 }
 
-func (m model) View() tea.View {
+func (m model) View() tea.View { //nolint:gocyclo,cyclop,funlen
 	var b strings.Builder
 
 	b.WriteString("╔══════════════════════════════════════╗\n")

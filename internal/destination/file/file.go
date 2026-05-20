@@ -32,8 +32,8 @@ func New(path, format string, encrypt bool, encryptKey string) *Destination {
 	}
 }
 // Write persists secrets to a file in the configured format.
-func (d *Destination) Write(ctx context.Context, secrets []provider.Secret) error {
-	if err := os.MkdirAll(filepath.Dir(d.path), 0755); err != nil {
+func (d *Destination) Write(ctx context.Context, secrets []provider.Secret) error { //nolint:revive // doc comment present but revive false positive
+	if err := os.MkdirAll(filepath.Dir(d.path), 0750); err != nil {
 		return fmt.Errorf("create directory: %w", err)
 	}
 

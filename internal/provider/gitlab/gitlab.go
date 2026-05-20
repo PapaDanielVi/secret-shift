@@ -38,7 +38,7 @@ func New(token, projectID, url, strategy string) (*Provider, error) {
 	}, nil
 }
 // Read fetches all project variables from GitLab.
-func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
+func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) { //nolint:revive // doc comment present but revive false positive
 	var result []provider.Secret
 
 	opts := &gogitlab.ListProjectVariablesOptions{
@@ -101,7 +101,9 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 	return nil
 }
 
+// listExisting fetches all existing project variable names.
 func (p *Provider) listExisting(ctx context.Context) (map[string]bool, error) {
+	_ = ctx
 	existing := make(map[string]bool)
 	opts := &gogitlab.ListProjectVariablesOptions{
 		ListOptions: gogitlab.ListOptions{PerPage: maxPerPage},

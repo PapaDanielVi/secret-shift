@@ -58,7 +58,7 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 }
 
 func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
-	data := make(map[string]interface{})
+	data := make(map[string]interface{}) //nolint:modernize
 	for _, s := range secrets {
 		data[s.Name] = s.Value
 	}

@@ -15,6 +15,10 @@ const (
 	typeEtcd        = "etcd"
 	typeKubernetes  = "kubernetes"
 	typeFile        = "file"
+
+	strategyReplace = "replace"
+	strategySkip    = "skip"
+	strategyReport  = "report"
 )
 
 type Config struct {
@@ -163,9 +167,9 @@ func (c *Config) Validate() error {
 	}
 
 	if c.Destination.ConflictStrategy == "" {
-		c.Destination.ConflictStrategy = "replace"
+		c.Destination.ConflictStrategy = strategyReplace
 	}
-	validStrategy := map[string]bool{"replace": true, "skip": true, "report": true}
+	validStrategy := map[string]bool{strategyReplace: true, strategySkip: true, strategyReport: true}
 	if !validStrategy[c.Destination.ConflictStrategy] {
 		return fmt.Errorf("unsupported conflict strategy: %s", c.Destination.ConflictStrategy)
 	}

@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
 )
 
@@ -22,7 +23,7 @@ func encryptSecret(publicKey, secretValue string) (string, error) {
 
 	pubKey, ok := pubKeyInterface.(*rsa.PublicKey)
 	if !ok {
-		return "", fmt.Errorf("public key is not RSA")
+		return "", errors.New("public key is not RSA")
 	}
 
 	encrypted, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pubKey, []byte(secretValue), nil)

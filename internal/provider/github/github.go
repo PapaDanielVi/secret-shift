@@ -217,7 +217,7 @@ func (p *Provider) createVariable(ctx context.Context, name, value string, exist
 	return err
 }
 
-func parseRepo(repo string) (owner, name string, err error) {
+func parseRepo(repo string) (string, string, error) {
 	for i, c := range repo {
 		if c == '/' {
 			return repo[:i], repo[i+1:], nil
