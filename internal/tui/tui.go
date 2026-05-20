@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/PapaDanielVi/secret-shift/internal/config"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type state int
@@ -59,15 +60,15 @@ var destTypes = []string{"file", "github", "gitlab", "vault", "etcd", "kubernete
 var conflictStrategies = []string{"replace", "skip", "report"}
 
 type model struct {
-	state        state
-	cfg          *config.Config
-	inputs       []textinput.Model
-	cursor       int
-	choices      []string
-	selected     int
-	err          error
-	result       string
-	quitting     bool
+	state    state
+	cfg      *config.Config
+	inputs   []textinput.Model
+	cursor   int
+	choices  []string
+	selected int
+	err      error
+	result   string
+	quitting bool
 }
 
 func initialModel() model {
@@ -112,33 +113,63 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+	case tea.KeyPressMsg:
+		key := msg.Key()
+
+		// Ctrl+C quits
+		if key.Code == 'c' && key.Mod == tea.ModCtrl {
 			m.quitting = true
 			return m, tea.Quit
+		}
 
-		case tea.KeyEnter:
-			return m.handleEnter()
+		// Escape quits
+		if key.Code == tea.KeyEscape {
+			m.quitting = true
+			return m, tea.Quit
+		}
 
+		// When in an input state, forward keys to the text input
+		if m.isInputState() {
+			m.inputs[0], _ = m.inputs[0].Update(msg)
+			return m, nil
+		}
+
+		// Selection states: navigate and confirm
+		switch key.Code {
 		case tea.KeyUp:
 			if m.cursor > 0 {
 				m.cursor--
 			}
-
 		case tea.KeyDown:
 			if m.cursor < len(m.choices)-1 {
 				m.cursor++
 			}
-
-		case tea.KeyTab:
-			if m.state >= stateSourceURL && m.state <= stateDestConflictStrategy {
-				m.cursor = (m.cursor + 1) % 2
-			}
+		case tea.KeyEnter:
+			return m.handleEnter()
 		}
 	}
 
 	return m, nil
+}
+
+// isInputState returns true when the current state requires text input.
+func (m model) isInputState() bool {
+	switch m.state {
+	case stateSourceURL, stateSourceRepo, stateSourceToken,
+		stateSourceProjectID, stateSourceVaultAddr, stateSourceVaultPath,
+		stateSourceEtcdEndpoints, stateSourceEtcdPrefix,
+		stateSourceKubeNamespace, stateSourceKubeSecretName, stateSourceKubeLabel,
+		stateProcessPrefix, stateProcessSuffix,
+		stateProcessIncludeRegex, stateProcessExcludeRegex,
+		stateDestURL, stateDestRepo, stateDestToken,
+		stateDestProjectID, stateDestFilePath, stateDestFileFormat,
+		stateDestEncrypt, stateDestVaultAddr, stateDestVaultPath,
+		stateDestEtcdEndpoints, stateDestEtcdPrefix,
+		stateDestKubeNamespace, stateDestKubeSecretName,
+		stateDestConflictStrategy:
+		return true
+	}
+	return false
 }
 
 func (m model) handleEnter() (tea.Model, tea.Cmd) {
@@ -147,36 +178,52 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 		m.cfg.Source.Type = sourceTypes[m.cursor]
 		m.cursor = 0
 		m.state = m.nextSourceState()
+		if m.isInputState() {
+			m.inputs[0].Focus()
+		}
 
 	case stateSourceURL:
 		m.cfg.Source.URL = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = m.nextSourceState()
+		if m.isInputState() {
+			m.inputs[0].Focus()
+		}
 
 	case stateSourceRepo:
 		m.cfg.Source.Repo = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceToken
+		m.inputs[0].Focus()
 
 	case stateSourceToken:
 		m.cfg.Source.Token = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceDone
 
 	case stateSourceProjectID:
 		m.cfg.Source.ProjectID = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceToken
+		m.inputs[0].Focus()
 
 	case stateSourceVaultAddr:
 		m.cfg.Source.VaultAddress = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceVaultPath
+		m.inputs[0].Focus()
 
 	case stateSourceVaultPath:
 		m.cfg.Source.VaultPath = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceToken
+		m.inputs[0].Focus()
 
 	case stateSourceEtcdEndpoints:
 		endpoints := strings.Split(m.inputs[0].Value(), ",")
@@ -185,50 +232,66 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 		}
 		m.cfg.Source.EtcdEndpoints = endpoints
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceEtcdPrefix
+		m.inputs[0].Focus()
 
 	case stateSourceEtcdPrefix:
 		m.cfg.Source.EtcdPrefix = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceDone
 
 	case stateSourceKubeNamespace:
 		m.cfg.Source.KubeNamespace = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceKubeSecretName
+		m.inputs[0].Focus()
 
 	case stateSourceKubeSecretName:
 		m.cfg.Source.KubeSecretName = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceKubeLabel
+		m.inputs[0].Focus()
 
 	case stateSourceKubeLabel:
 		m.cfg.Source.KubeLabel = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateSourceDone
 
 	case stateSourceDone:
 		m.state = stateProcessPrefix
 		m.cursor = 0
+		m.inputs[0].Focus()
 
 	case stateProcessPrefix:
 		m.cfg.Process.AddPrefix = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateProcessSuffix
+		m.inputs[0].Focus()
 
 	case stateProcessSuffix:
 		m.cfg.Process.AddSuffix = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateProcessIncludeRegex
+		m.inputs[0].Focus()
 
 	case stateProcessIncludeRegex:
 		m.cfg.Process.IncludeRegex = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateProcessExcludeRegex
+		m.inputs[0].Focus()
 
 	case stateProcessExcludeRegex:
 		m.cfg.Process.ExcludeRegex = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateProcessDone
 
 	case stateProcessDone:
@@ -240,31 +303,46 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 		m.cfg.Destination.Type = destTypes[m.cursor]
 		m.cursor = 0
 		m.state = m.nextDestState()
+		if m.isInputState() {
+			m.inputs[0].Focus()
+		}
 
 	case stateDestURL:
 		m.cfg.Destination.URL = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = m.nextDestState()
+		if m.isInputState() {
+			m.inputs[0].Focus()
+		}
 
 	case stateDestRepo:
 		m.cfg.Destination.Repo = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestToken
+		m.inputs[0].Focus()
 
 	case stateDestToken:
 		m.cfg.Destination.Token = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestConflictStrategy
+		m.inputs[0].Focus()
 
 	case stateDestProjectID:
 		m.cfg.Destination.ProjectID = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestToken
+		m.inputs[0].Focus()
 
 	case stateDestFilePath:
 		m.cfg.Destination.Path = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestFileFormat
+		m.inputs[0].Focus()
 
 	case stateDestFileFormat:
 		m.cfg.Destination.Format = m.inputs[0].Value()
@@ -272,22 +350,28 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 			m.cfg.Destination.Format = "json"
 		}
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestEncrypt
+		m.inputs[0].Focus()
 
 	case stateDestEncrypt:
 		val := strings.ToLower(m.inputs[0].Value())
 		m.cfg.Destination.Encrypt = val == "y" || val == "yes"
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestDone
 
 	case stateDestVaultAddr:
 		m.cfg.Destination.VaultAddress = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestVaultPath
+		m.inputs[0].Focus()
 
 	case stateDestVaultPath:
 		m.cfg.Destination.VaultPath = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestDone
 
 	case stateDestEtcdEndpoints:
@@ -297,21 +381,27 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 		}
 		m.cfg.Destination.EtcdEndpoints = endpoints
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestEtcdPrefix
+		m.inputs[0].Focus()
 
 	case stateDestEtcdPrefix:
 		m.cfg.Destination.EtcdPrefix = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestDone
 
 	case stateDestKubeNamespace:
 		m.cfg.Destination.KubeNamespace = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestKubeSecretName
+		m.inputs[0].Focus()
 
 	case stateDestKubeSecretName:
 		m.cfg.Destination.KubeSecretName = m.inputs[0].Value()
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestDone
 
 	case stateDestConflictStrategy:
@@ -320,6 +410,7 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 			m.cfg.Destination.ConflictStrategy = "replace"
 		}
 		m.inputs[0].Reset()
+		m.inputs[0].Blur()
 		m.state = stateDestDone
 
 	case stateDestDone:
@@ -375,7 +466,7 @@ func (m model) nextDestState() state {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var b strings.Builder
 
 	b.WriteString("╔══════════════════════════════════════╗\n")
@@ -541,5 +632,5 @@ func (m model) View() string {
 	}
 
 	b.WriteString("\n  ↑/↓: select  Enter: confirm  Esc: cancel\n")
-	return b.String()
+	return tea.NewView(b.String())
 }
