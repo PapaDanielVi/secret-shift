@@ -2,8 +2,13 @@ package file
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -12,14 +17,18 @@ import (
 )
 
 type Destination struct {
-	path   string
-	format string
+	path       string
+	format     string
+	encrypt    bool
+	encryptKey string
 }
 
-func New(path, format string) *Destination {
+func New(path, format string, encrypt bool, encryptKey string) *Destination {
 	return &Destination{
-		path:   path,
-		format: format,
+		path:       path,
+		format:     format,
+		encrypt:    encrypt,
+		encryptKey: encryptKey,
 	}
 }
 
@@ -47,6 +56,13 @@ func (d *Destination) Write(ctx context.Context, secrets []source.Secret) error 
 		return fmt.Errorf("marshal output: %w", err)
 	}
 
+	if d.encrypt {
+		output, err = d.encryptData(output)
+		if err != nil {
+			return fmt.Errorf("encrypt output: %w", err)
+		}
+	}
+
 	if err := os.WriteFile(d.path, output, 0600); err != nil {
 		return fmt.Errorf("write file: %w", err)
 	}
@@ -54,6 +70,29 @@ func (d *Destination) Write(ctx context.Context, secrets []source.Secret) error 
 	return nil
 }
 
-var _ interface {
-	Write(ctx context.Context, secrets []source.Secret) error
-} = (*Destination)(nil)
+func (d *Destination) encryptData(plaintext []byte) ([]byte, error) {
+	key := d.deriveKey()
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("create cipher: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("create GCM: %w", err)
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, fmt.Errorf("generate nonce: %w", err)
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
+	return ciphertext, nil
+}
+
+func (d *Destination) deriveKey() []byte {
+	hash := sha256.Sum256([]byte(d.encryptKey))
+	return hash[:]
+}

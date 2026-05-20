@@ -8,9 +8,8 @@ func TestValidate_MissingSourceType(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Token: "tok"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Path:  "/tmp/out.json",
-			Token: "tok",
+			Type: "file",
+			Path: "/tmp/out.json",
 		},
 	}
 	err := cfg.Validate()
@@ -21,11 +20,10 @@ func TestValidate_MissingSourceType(t *testing.T) {
 
 func TestValidate_InvalidSourceType(t *testing.T) {
 	cfg := &Config{
-		Source: SourceConfig{Type: "vault", Token: "tok", Repo: "o/r"},
+		Source: SourceConfig{Type: "unknown", Token: "tok", Repo: "o/r"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Path:  "/tmp/out.json",
-			Token: "tok",
+			Type: "file",
+			Path: "/tmp/out.json",
 		},
 	}
 	err := cfg.Validate()
@@ -38,9 +36,8 @@ func TestValidate_MissingRepo(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Type: "github", Token: "tok"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Path:  "/tmp/out.json",
-			Token: "tok",
+			Type: "file",
+			Path: "/tmp/out.json",
 		},
 	}
 	err := cfg.Validate()
@@ -53,9 +50,8 @@ func TestValidate_MissingToken(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Type: "github", Repo: "o/r"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Path:  "/tmp/out.json",
-			Token: "tok",
+			Type: "file",
+			Path: "/tmp/out.json",
 		},
 	}
 	err := cfg.Validate()
@@ -68,8 +64,7 @@ func TestValidate_InvalidDestType(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Type: "github", Repo: "o/r", Token: "tok"},
 		Destination: DestinationConfig{
-			Type:  "vault",
-			Token: "tok",
+			Type: "unknown",
 		},
 	}
 	err := cfg.Validate()
@@ -82,8 +77,7 @@ func TestValidate_FileDestMissingPath(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Type: "github", Repo: "o/r", Token: "tok"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Token: "tok",
+			Type: "file",
 		},
 	}
 	err := cfg.Validate()
@@ -98,7 +92,6 @@ func TestValidate_InvalidStrategy(t *testing.T) {
 		Destination: DestinationConfig{
 			Type:             "file",
 			Path:             "/tmp/out.json",
-			Token:            "tok",
 			ConflictStrategy: "invalid",
 		},
 	}
@@ -112,9 +105,8 @@ func TestValidate_DefaultStrategy(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Type: "github", Repo: "o/r", Token: "tok"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Path:  "/tmp/out.json",
-			Token: "tok",
+			Type: "file",
+			Path: "/tmp/out.json",
 		},
 	}
 	err := cfg.Validate()
@@ -130,8 +122,8 @@ func TestValidate_ValidGithubToFile(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Type: "github", Repo: "owner/repo", Token: "ghp_xxx"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Path:  "/tmp/out.json",
+			Type:   "file",
+			Path:   "/tmp/out.json",
 			Format: "json",
 		},
 	}
@@ -145,9 +137,174 @@ func TestValidate_ValidGitlabToFile(t *testing.T) {
 	cfg := &Config{
 		Source: SourceConfig{Type: "gitlab", ProjectID: "123", Token: "glpat-xxx"},
 		Destination: DestinationConfig{
-			Type:  "file",
-			Path:  "/tmp/out.yaml",
+			Type:   "file",
+			Path:   "/tmp/out.yaml",
 			Format: "yaml",
+		},
+	}
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidate_ValidVaultSource(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{
+			Type:         "vault",
+			VaultAddress: "https://vault.example.com",
+			VaultPath:    "myapp/config",
+			Token:        "hvs.xxx",
+		},
+		Destination: DestinationConfig{
+			Type: "file",
+			Path: "/tmp/out.json",
+		},
+	}
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidate_VaultSourceMissingAddress(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{
+			Type:      "vault",
+			VaultPath: "myapp/config",
+			Token:     "hvs.xxx",
+		},
+		Destination: DestinationConfig{
+			Type: "file",
+			Path: "/tmp/out.json",
+		},
+	}
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing vault address")
+	}
+}
+
+func TestValidate_VaultSourceMissingPath(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{
+			Type:         "vault",
+			VaultAddress: "https://vault.example.com",
+			Token:        "hvs.xxx",
+		},
+		Destination: DestinationConfig{
+			Type: "file",
+			Path: "/tmp/out.json",
+		},
+	}
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing vault path")
+	}
+}
+
+func TestValidate_ValidEtcdSource(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{
+			Type:          "etcd",
+			EtcdEndpoints: []string{"http://localhost:2379"},
+		},
+		Destination: DestinationConfig{
+			Type: "file",
+			Path: "/tmp/out.json",
+		},
+	}
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidate_EtcdSourceMissingEndpoints(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{
+			Type: "etcd",
+		},
+		Destination: DestinationConfig{
+			Type: "file",
+			Path: "/tmp/out.json",
+		},
+	}
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing etcd endpoints")
+	}
+}
+
+func TestValidate_ValidKubernetesSource(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{
+			Type:          "kubernetes",
+			KubeNamespace: "default",
+		},
+		Destination: DestinationConfig{
+			Type: "file",
+			Path: "/tmp/out.json",
+		},
+	}
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidate_KubernetesSourceMissingNamespace(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{
+			Type: "kubernetes",
+		},
+		Destination: DestinationConfig{
+			Type: "file",
+			Path: "/tmp/out.json",
+		},
+	}
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing kube namespace")
+	}
+}
+
+func TestValidate_ValidVaultDest(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{Type: "github", Repo: "o/r", Token: "tok"},
+		Destination: DestinationConfig{
+			Type:         "vault",
+			VaultAddress: "https://vault.example.com",
+			VaultPath:    "myapp/config",
+			Token:        "hvs.xxx",
+		},
+	}
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidate_ValidEtcdDest(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{Type: "github", Repo: "o/r", Token: "tok"},
+		Destination: DestinationConfig{
+			Type:          "etcd",
+			EtcdEndpoints: []string{"http://localhost:2379"},
+		},
+	}
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidate_ValidKubernetesDest(t *testing.T) {
+	cfg := &Config{
+		Source: SourceConfig{Type: "github", Repo: "o/r", Token: "tok"},
+		Destination: DestinationConfig{
+			Type:          "kubernetes",
+			KubeNamespace: "default",
 		},
 	}
 	err := cfg.Validate()
