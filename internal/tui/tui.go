@@ -56,6 +56,7 @@ const (
 )
 
 var sourceTypes = []string{"github", "gitlab", "vault", "etcd", "kubernetes"}
+
 var destTypes = []string{"file", "github", "gitlab", "vault", "etcd", "kubernetes"}
 
 type model struct {
@@ -64,7 +65,6 @@ type model struct {
 	inputs   []textinput.Model
 	cursor   int
 	choices  []string
-	selected int
 	err      error
 	result   string
 	quitting bool
@@ -172,6 +172,7 @@ func (m model) isInputState() bool {
 		stateDestKubeNamespace, stateDestKubeSecretName,
 		stateDestConflictStrategy:
 		return true
+	default:
 	}
 	return false
 }
@@ -400,6 +401,7 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 			m.result = "cancel"
 		}
 		return m, tea.Quit
+	default:
 	}
 
 	return m, nil
@@ -464,66 +466,66 @@ func (m model) View() tea.View {
 			if m.cursor == i {
 				cursor = ">"
 			}
-			b.WriteString(fmt.Sprintf("  %s %s\n", cursor, choice))
+			b.WriteString("  " + cursor + " " + choice + "\n")
 		}
 
 	case stateSourceRepo:
 		b.WriteString("Enter source repository (owner/repo):\n\n")
 		m.inputs[0].Placeholder = "owner/repo"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceToken:
 		b.WriteString("Enter source token:\n\n")
 		m.inputs[0].EchoMode = textinput.EchoPassword
 		m.inputs[0].Placeholder = "token"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceProjectID:
 		b.WriteString("Enter source project ID:\n\n")
 		m.inputs[0].Placeholder = "12345"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceVaultAddr:
 		b.WriteString("Enter Vault address:\n\n")
 		m.inputs[0].Placeholder = "https://vault.example.com"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceVaultPath:
 		b.WriteString("Enter Vault secret path:\n\n")
 		m.inputs[0].Placeholder = "myapp/config"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceEtcdEndpoints:
 		b.WriteString("Enter etcd endpoints (comma-separated):\n\n")
 		m.inputs[0].Placeholder = "http://localhost:2379"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceEtcdPrefix:
 		b.WriteString("Enter etcd prefix:\n\n")
 		m.inputs[0].Placeholder = "/secrets/"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceKubeNamespace:
 		b.WriteString("Enter Kubernetes namespace:\n\n")
 		m.inputs[0].Placeholder = "default"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceKubeSecretName:
 		b.WriteString("Enter Kubernetes secret name (leave empty for all):\n\n")
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateSourceKubeLabel:
 		b.WriteString("Enter Kubernetes label selector (leave empty for none):\n\n")
 		m.inputs[0].Placeholder = "app=myapp"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 
 	case stateProcessPrefix:
 		b.WriteString("Add prefix to secret names? (leave empty to skip):\n\n")
 		m.inputs[0].Placeholder = "PROD_"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateProcessSuffix:
 		b.WriteString("Add suffix to secret names? (leave empty to skip):\n\n")
 		m.inputs[0].Placeholder = "_ENV"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateProcessIncludeRegex:
 		b.WriteString("Include regex filter (leave empty to skip):\n\n")
 		m.inputs[0].Placeholder = "^DB_"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateProcessExcludeRegex:
 		b.WriteString("Exclude regex filter (leave empty to skip):\n\n")
 		m.inputs[0].Placeholder = "^DEBUG_"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 
 	case stateDestType:
 		b.WriteString("Select destination type:\n\n")
@@ -532,85 +534,85 @@ func (m model) View() tea.View {
 			if m.cursor == i {
 				cursor = ">"
 			}
-			b.WriteString(fmt.Sprintf("  %s %s\n", cursor, choice))
+			b.WriteString("  " + cursor + " " + choice + "\n")
 		}
 
 	case stateDestRepo:
 		b.WriteString("Enter destination repository (owner/repo):\n\n")
 		m.inputs[0].Placeholder = "owner/repo"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestToken:
 		b.WriteString("Enter destination token:\n\n")
 		m.inputs[0].EchoMode = textinput.EchoPassword
 		m.inputs[0].Placeholder = "token"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestProjectID:
 		b.WriteString("Enter destination project ID:\n\n")
 		m.inputs[0].Placeholder = "12345"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestFilePath:
 		b.WriteString("Enter output file path:\n\n")
 		m.inputs[0].Placeholder = "./output/secrets.json"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestFileFormat:
 		b.WriteString("Enter file format (json/yaml):\n\n")
 		m.inputs[0].Placeholder = "json"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestEncrypt:
 		b.WriteString("Encrypt file at rest? (y/n):\n\n")
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestVaultAddr:
 		b.WriteString("Enter Vault address:\n\n")
 		m.inputs[0].Placeholder = "https://vault.example.com"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestVaultPath:
 		b.WriteString("Enter Vault secret path:\n\n")
 		m.inputs[0].Placeholder = "myapp/config"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestEtcdEndpoints:
 		b.WriteString("Enter etcd endpoints (comma-separated):\n\n")
 		m.inputs[0].Placeholder = "http://localhost:2379"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestEtcdPrefix:
 		b.WriteString("Enter etcd prefix:\n\n")
 		m.inputs[0].Placeholder = "/secrets/"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestKubeNamespace:
 		b.WriteString("Enter Kubernetes namespace:\n\n")
 		m.inputs[0].Placeholder = "default"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 	case stateDestKubeSecretName:
 		b.WriteString("Enter Kubernetes secret name:\n\n")
 		m.inputs[0].Placeholder = "imported-secrets"
-		b.WriteString(fmt.Sprintf("  %s\n", m.inputs[0].View()))
+		b.WriteString("  " + m.inputs[0].View() + "\n")
 
 	case stateConfirm:
 		b.WriteString("Configuration summary:\n\n")
-		b.WriteString(fmt.Sprintf("  Source:      %s\n", m.cfg.Source.Type))
+		b.WriteString("  Source:      " + m.cfg.Source.Type + "\n")
 		if m.cfg.Source.Repo != "" {
-			b.WriteString(fmt.Sprintf("  Source repo: %s\n", m.cfg.Source.Repo))
+			b.WriteString("  Source repo: " + m.cfg.Source.Repo + "\n")
 		}
 		if m.cfg.Source.ProjectID != "" {
-			b.WriteString(fmt.Sprintf("  Source proj: %s\n", m.cfg.Source.ProjectID))
+			b.WriteString("  Source proj: " + m.cfg.Source.ProjectID + "\n")
 		}
 		if m.cfg.Source.VaultAddress != "" {
-			b.WriteString(fmt.Sprintf("  Source vault: %s\n", m.cfg.Source.VaultAddress))
+			b.WriteString("  Source vault: " + m.cfg.Source.VaultAddress + "\n")
 		}
-		b.WriteString(fmt.Sprintf("  Destination: %s\n", m.cfg.Destination.Type))
+		b.WriteString("  Destination: " + m.cfg.Destination.Type + "\n")
 		if m.cfg.Destination.Path != "" {
-			b.WriteString(fmt.Sprintf("  Dest path:   %s\n", m.cfg.Destination.Path))
+			b.WriteString("  Dest path:   " + m.cfg.Destination.Path + "\n")
 		}
 		if m.cfg.Destination.Repo != "" {
-			b.WriteString(fmt.Sprintf("  Dest repo:   %s\n", m.cfg.Destination.Repo))
+			b.WriteString("  Dest repo:   " + m.cfg.Destination.Repo + "\n")
 		}
 		if m.cfg.Destination.VaultAddress != "" {
-			b.WriteString(fmt.Sprintf("  Dest vault:  %s\n", m.cfg.Destination.VaultAddress))
+			b.WriteString("  Dest vault:  " + m.cfg.Destination.VaultAddress + "\n")
 		}
 		if m.cfg.Process.AddPrefix != "" {
-			b.WriteString(fmt.Sprintf("  Prefix:      %s\n", m.cfg.Process.AddPrefix))
+			b.WriteString("  Prefix:      " + m.cfg.Process.AddPrefix + "\n")
 		}
 		if m.cfg.Process.AddSuffix != "" {
-			b.WriteString(fmt.Sprintf("  Suffix:      %s\n", m.cfg.Process.AddSuffix))
+			b.WriteString("  Suffix:      " + m.cfg.Process.AddSuffix + "\n")
 		}
 		b.WriteString("\n")
 		for i, choice := range m.choices {
@@ -618,8 +620,9 @@ func (m model) View() tea.View {
 			if m.cursor == i {
 				cursor = ">"
 			}
-			b.WriteString(fmt.Sprintf("  %s %s\n", cursor, choice))
+			b.WriteString("  " + cursor + " " + choice + "\n")
 		}
+	default:
 	}
 
 	b.WriteString("\n  ↑/↓: select  Enter: confirm  Esc: cancel\n")

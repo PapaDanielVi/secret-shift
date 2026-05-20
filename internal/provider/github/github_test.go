@@ -14,8 +14,8 @@ import (
 
 func setupMockServer(secretNames []string, variables []*github.ActionsVariable) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/repos/owner/repo/actions/secrets":
+		switch r.URL.Path {
+		case "/repos/owner/repo/actions/secrets":
 			resp := github.Secrets{
 				TotalCount: len(secretNames),
 				Secrets:    make([]*github.Secret, len(secretNames)),
@@ -23,14 +23,18 @@ func setupMockServer(secretNames []string, variables []*github.ActionsVariable) 
 			for i, name := range secretNames {
 				resp.Secrets[i] = &github.Secret{Name: name}
 			}
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 
-		case r.URL.Path == "/repos/owner/repo/actions/variables":
+		case "/repos/owner/repo/actions/variables":
 			resp := github.ActionsVariables{
 				TotalCount: len(variables),
 				Variables:  variables,
 			}
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 
 		default:
 			w.WriteHeader(http.StatusNotFound)

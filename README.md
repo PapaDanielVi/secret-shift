@@ -1,3 +1,5 @@
+<img src="docs/icon.png" alt="secret-shift" style="border-radius: 50%; width: 300px; height: 300px; object-fit: cover;"/>
+
 # SecretShift
 
 [![CI](https://github.com/PapaDanielVi/secret-shift/actions/workflows/test.yml/badge.svg)](https://github.com/PapaDanielVi/secret-shift/actions/workflows/test.yml)
@@ -25,6 +27,12 @@ SecretShift is a CLI tool for migrating and syncing secrets and environment vari
 ```bash
 brew tap PapaDanielVi/tap
 brew install secret-shift
+```
+
+### Go Install
+
+```bash
+go install github.com/PapaDanielVi/secret-shift@latest
 ```
 
 ### From Source
@@ -101,12 +109,12 @@ secret-shift sync
 
 Execute a sync pipeline.
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-c, --config` | `./secret-shift.json` | Path to config file |
-| `--periodically` | `false` | Run in a loop |
-| `--frequency` | `5m` | Interval between syncs (e.g. `1m`, `1h`) |
-| `--cron` | | Cron expression (e.g. `*/5 * * * *`) |
+| Flag             | Default               | Description                              |
+| ---------------- | --------------------- | ---------------------------------------- |
+| `-c, --config`   | `./secret-shift.json` | Path to config file                      |
+| `--periodically` | `false`               | Run in a loop                            |
+| `--frequency`    | `5m`                  | Interval between syncs (e.g. `1m`, `1h`) |
+| `--cron`         |                       | Cron expression (e.g. `*/5 * * * *`)     |
 
 ### `secret-shift version`
 
@@ -118,24 +126,24 @@ Interactive terminal wizard that walks through source, processing, and destinati
 
 ## Sources
 
-| Source | What it reads |
-|--------|--------------|
-| **github** | GitHub Actions secrets + environment variables |
-| **gitlab** | GitLab project-level CI/CD variables |
-| **vault** | HashiCorp Vault KV v2 secrets |
-| **etcd** | etcd key-value pairs under a prefix |
+| Source         | What it reads                                           |
+| -------------- | ------------------------------------------------------- |
+| **github**     | GitHub Actions secrets + environment variables          |
+| **gitlab**     | GitLab project-level CI/CD variables                    |
+| **vault**      | HashiCorp Vault KV v2 secrets                           |
+| **etcd**       | etcd key-value pairs under a prefix                     |
 | **kubernetes** | K8s Secrets + ConfigMaps (by name, label, or namespace) |
 
 ## Destinations
 
-| Destination | What it writes | Notes |
-|-------------|---------------|-------|
-| **file** | Local JSON or YAML file | Optional AES-256-GCM encryption |
-| **github** | GitHub Actions secrets + environment variables | RSA-OAEP encrypted |
-| **gitlab** | GitLab project-level CI/CD variables | |
-| **vault** | HashiCorp Vault KV v2 | Single KV entry |
-| **etcd** | etcd key-value store | One key per secret |
-| **kubernetes** | K8s Secrets + ConfigMaps | Routes by secret type |
+| Destination    | What it writes                                 | Notes                           |
+| -------------- | ---------------------------------------------- | ------------------------------- |
+| **file**       | Local JSON or YAML file                        | Optional AES-256-GCM encryption |
+| **github**     | GitHub Actions secrets + environment variables | RSA-OAEP encrypted              |
+| **gitlab**     | GitLab project-level CI/CD variables           |                                 |
+| **vault**      | HashiCorp Vault KV v2                          | Single KV entry                 |
+| **etcd**       | etcd key-value store                           | One key per secret              |
+| **kubernetes** | K8s Secrets + ConfigMaps                       | Routes by secret type           |
 
 ## Processing
 
@@ -149,11 +157,11 @@ The processor runs between source and destination:
 
 For destinations that support it (GitHub, GitLab):
 
-| Strategy | Behavior |
-|----------|----------|
+| Strategy  | Behavior                             |
+| --------- | ------------------------------------ |
 | `replace` | Overwrite existing secrets (default) |
-| `skip` | Silently skip existing secrets |
-| `report` | Print conflict info and skip |
+| `skip`    | Silently skip existing secrets       |
+| `report`  | Print conflict info and skip         |
 
 ## Project Structure
 

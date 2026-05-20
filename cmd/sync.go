@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
+	"log/slog"
 	"time"
 
 	"github.com/PapaDanielVi/secret-shift/internal/config"
@@ -73,20 +73,20 @@ func runPeriodic(ctx context.Context, p *pipeline.Pipeline, freq time.Duration) 
 	ticker := time.NewTicker(freq)
 	defer ticker.Stop()
 
-	fmt.Printf("Starting periodic sync every %s (Ctrl+C to stop)\n", freq)
+	slog.Info("Starting periodic sync", "frequency", freq)
 
 	if err := p.Run(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "Sync error: %v\n", err)
+		slog.Error("Sync error", "err", err)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Stopping periodic sync")
+			slog.Info("Stopping periodic sync")
 			return nil
 		case <-ticker.C:
 			if err := p.Run(ctx); err != nil {
-				fmt.Fprintf(os.Stderr, "Sync error: %v\n", err)
+				slog.Error("Sync error", "err", err)
 			}
 		}
 	}
@@ -99,19 +99,19 @@ func runCron(ctx context.Context, p *pipeline.Pipeline, expr string) error {
 
 	entryID, err := c.AddFunc(expr, func() {
 		if err := p.Run(ctx); err != nil {
-			fmt.Fprintf(os.Stderr, "Sync error: %v\n", err)
+			slog.Error("Sync error", "err", err)
 		}
 	})
 	if err != nil {
 		return fmt.Errorf("invalid cron expression %q: %w", expr, err)
 	}
 
-	fmt.Printf("Starting cron sync with schedule %q (Ctrl+C to stop)\n", expr)
+	slog.Info("Starting cron sync", "schedule", expr)
 	_ = entryID
 
 	c.Start()
 	<-ctx.Done()
-	fmt.Println("Stopping cron sync")
+	slog.Info("Stopping cron sync")
 	c.Stop()
 	return nil
 }

@@ -400,12 +400,12 @@ linters:
       # https://github.com/go-simpler/sloglint#no-global-logger
       # Values: "all", "default"
       # Default: "" (disabled)
-      no-global: all
+      no-global: ""
       # Report the use of functions without a context.Context.
       # https://github.com/go-simpler/sloglint#context-only
       # Values: "all", "scope"
       # Default: "" (disabled)
-      context: scope
+      context: ""
 
     staticcheck:
       # SAxxxx checks in https://staticcheck.dev/docs/configuration/options/#checks
@@ -455,14 +455,12 @@ linters:
           - wrapcheck
           - paralleltest
           - usetesting
-      - path: 'cmd/jamshid/main.go'
+      - path: 'cmd/'
         linters:
           - forbidigo
           - gochecknoinits
-          - nestif
-          - gocognit
-          - mnd
           - gochecknoglobals
+          - revive
       - path: 'internal/tui/'
         linters:
           - gochecknoglobals

@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 
@@ -45,56 +46,49 @@ func New(kubeconfig, namespace, secretName, labelSelector string) (*Provider, er
 }
 
 func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
-	var result []provider.Secret
-
 	if p.secretName != "" {
-		secret, err := p.clientset.CoreV1().Secrets(p.namespace).Get(ctx, p.secretName, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("get secret %s/%s: %w", p.namespace, p.secretName, err)
-		}
-		for k, v := range secret.Data {
-			result = append(result, provider.Secret{
-				Name:  k,
-				Value: string(v),
-				Type:  "secret",
-			})
-		}
-		return result, nil
+		return p.readSingleSecret(ctx)
 	}
 
 	if p.labelSelector != "" {
-		secrets, err := p.clientset.CoreV1().Secrets(p.namespace).List(ctx, metav1.ListOptions{
-			LabelSelector: p.labelSelector,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("list secrets with label %s: %w", p.labelSelector, err)
-		}
-		for _, secret := range secrets.Items {
-			for k, v := range secret.Data {
-				name := secret.Name + "/" + k
-				result = append(result, provider.Secret{
-					Name:  name,
-					Value: string(v),
-					Type:  "secret",
-				})
-			}
-		}
-		return result, nil
+		return p.readSecretsByLabel(ctx)
 	}
+
+	return p.readAllSecretsAndConfigMaps(ctx)
+}
+
+func (p *Provider) readSingleSecret(ctx context.Context) ([]provider.Secret, error) {
+	secret, err := p.clientset.CoreV1().Secrets(p.namespace).Get(ctx, p.secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("get secret %s/%s: %w", p.namespace, p.secretName, err)
+	}
+	return p.extractSecretsFromSecret(secret, ""), nil
+}
+
+func (p *Provider) readSecretsByLabel(ctx context.Context) ([]provider.Secret, error) {
+	secrets, err := p.clientset.CoreV1().Secrets(p.namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: p.labelSelector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list secrets with label %s: %w", p.labelSelector, err)
+	}
+
+	var result []provider.Secret
+	for _, secret := range secrets.Items {
+		result = append(result, p.extractSecretsFromSecret(&secret, secret.Name+"/")...)
+	}
+	return result, nil
+}
+
+func (p *Provider) readAllSecretsAndConfigMaps(ctx context.Context) ([]provider.Secret, error) {
+	var result []provider.Secret
 
 	secrets, err := p.clientset.CoreV1().Secrets(p.namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("list secrets in namespace %s: %w", p.namespace, err)
 	}
 	for _, secret := range secrets.Items {
-		for k, v := range secret.Data {
-			name := secret.Name + "/" + k
-			result = append(result, provider.Secret{
-				Name:  name,
-				Value: string(v),
-				Type:  "secret",
-			})
-		}
+		result = append(result, p.extractSecretsFromSecret(&secret, secret.Name+"/")...)
 	}
 
 	configmaps, err := p.clientset.CoreV1().ConfigMaps(p.namespace).List(ctx, metav1.ListOptions{})
@@ -103,9 +97,8 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 	}
 	for _, cm := range configmaps.Items {
 		for k, v := range cm.Data {
-			name := cm.Name + "/" + k
 			result = append(result, provider.Secret{
-				Name:  name,
+				Name:  cm.Name + "/" + k,
 				Value: v,
 				Type:  "env",
 			})
@@ -113,6 +106,18 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 	}
 
 	return result, nil
+}
+
+func (p *Provider) extractSecretsFromSecret(secret *corev1.Secret, prefix string) []provider.Secret {
+	var result []provider.Secret
+	for k, v := range secret.Data {
+		result = append(result, provider.Secret{
+			Name:  prefix + k,
+			Value: string(v),
+			Type:  "secret",
+		})
+	}
+	return result
 }
 
 func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
@@ -169,9 +174,7 @@ func (p *Provider) writeSecret(ctx context.Context, data map[string]string) erro
 		if existing.StringData == nil {
 			existing.StringData = make(map[string]string)
 		}
-		for k, v := range data {
-			existing.StringData[k] = v
-		}
+		maps.Insert(existing.StringData, maps.All(data))
 		_, err = p.clientset.CoreV1().Secrets(p.namespace).Update(ctx, existing, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("update secret: %w", err)
@@ -208,9 +211,7 @@ func (p *Provider) writeConfigMap(ctx context.Context, data map[string]string) e
 		if existing.Data == nil {
 			existing.Data = make(map[string]string)
 		}
-		for k, v := range data {
-			existing.Data[k] = v
-		}
+		maps.Insert(existing.Data, maps.All(data))
 		_, err = p.clientset.CoreV1().ConfigMaps(p.namespace).Update(ctx, existing, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("update configmap: %w", err)

@@ -1,10 +1,20 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/viper"
+)
+
+const (
+	typeGithub      = "github"
+	typeGitlab      = "gitlab"
+	typeVault       = "vault"
+	typeEtcd        = "etcd"
+	typeKubernetes  = "kubernetes"
+	typeFile        = "file"
 )
 
 type Config struct {
@@ -81,12 +91,12 @@ type DestinationConfig struct {
 	KubeLabel      string `mapstructure:"kube_label"`
 }
 
-var validSourceTypes = map[string]bool{
-	"github": true, "gitlab": true, "vault": true, "etcd": true, "kubernetes": true,
+var validSourceTypes = map[string]bool{ //nolint:gochecknoglobals // global config state
+	typeGithub: true, typeGitlab: true, typeVault: true, typeEtcd: true, typeKubernetes: true,
 }
 
-var validDestTypes = map[string]bool{
-	"file": true, "github": true, "gitlab": true, "vault": true, "etcd": true, "kubernetes": true,
+var validDestTypes = map[string]bool{ //nolint:gochecknoglobals // global config state
+	typeFile: true, typeGithub: true, typeGitlab: true, typeVault: true, typeEtcd: true, typeKubernetes: true,
 }
 
 func Load(configFile string) (*Config, error) {
@@ -133,7 +143,7 @@ func Load(configFile string) (*Config, error) {
 
 func (c *Config) Validate() error {
 	if c.Source.Type == "" {
-		return fmt.Errorf("source.type is required")
+		return errors.New("source.type is required")
 	}
 	if !validSourceTypes[c.Source.Type] {
 		return fmt.Errorf("unsupported source type: %s", c.Source.Type)
@@ -143,7 +153,7 @@ func (c *Config) Validate() error {
 	}
 
 	if c.Destination.Type == "" {
-		return fmt.Errorf("destination.type is required")
+		return errors.New("destination.type is required")
 	}
 	if !validDestTypes[c.Destination.Type] {
 		return fmt.Errorf("unsupported destination type: %s", c.Destination.Type)
@@ -165,34 +175,34 @@ func (c *Config) Validate() error {
 
 func validateSourceFields(s *SourceConfig) error {
 	switch s.Type {
-	case "github":
+	case typeGithub:
 		if s.Repo == "" {
-			return fmt.Errorf("source.repo is required for github source")
+			return errors.New("source.repo is required for github source")
 		}
 		if s.Token == "" {
-			return fmt.Errorf("source token is required for github source")
+			return errors.New("source token is required for github source")
 		}
-	case "gitlab":
+	case typeGitlab:
 		if s.ProjectID == "" {
-			return fmt.Errorf("source.project_id is required for gitlab source")
+			return errors.New("source.project_id is required for gitlab source")
 		}
 		if s.Token == "" {
-			return fmt.Errorf("source token is required for gitlab source")
+			return errors.New("source token is required for gitlab source")
 		}
-	case "vault":
+	case typeVault:
 		if s.VaultAddress == "" {
-			return fmt.Errorf("source.vault_address is required for vault source")
+			return errors.New("source.vault_address is required for vault source")
 		}
 		if s.VaultPath == "" {
-			return fmt.Errorf("source.vault_path is required for vault source")
+			return errors.New("source.vault_path is required for vault source")
 		}
-	case "etcd":
+	case typeEtcd:
 		if len(s.EtcdEndpoints) == 0 {
-			return fmt.Errorf("source.etcd_endpoints is required for etcd source")
+			return errors.New("source.etcd_endpoints is required for etcd source")
 		}
-	case "kubernetes":
+	case typeKubernetes:
 		if s.KubeNamespace == "" {
-			return fmt.Errorf("source.kube_namespace is required for kubernetes source")
+			return errors.New("source.kube_namespace is required for kubernetes source")
 		}
 	}
 	return nil
@@ -200,38 +210,38 @@ func validateSourceFields(s *SourceConfig) error {
 
 func validateDestFields(d *DestinationConfig) error {
 	switch d.Type {
-	case "file":
+	case typeFile:
 		if d.Path == "" {
-			return fmt.Errorf("destination.path is required for file destination")
+			return errors.New("destination.path is required for file destination")
 		}
-	case "github":
+	case typeGithub:
 		if d.Repo == "" {
-			return fmt.Errorf("destination.repo is required for github destination")
+			return errors.New("destination.repo is required for github destination")
 		}
 		if d.Token == "" {
-			return fmt.Errorf("destination token is required for github destination")
+			return errors.New("destination token is required for github destination")
 		}
-	case "gitlab":
+	case typeGitlab:
 		if d.ProjectID == "" {
-			return fmt.Errorf("destination.project_id is required for gitlab destination")
+			return errors.New("destination.project_id is required for gitlab destination")
 		}
 		if d.Token == "" {
-			return fmt.Errorf("destination token is required for gitlab destination")
+			return errors.New("destination token is required for gitlab destination")
 		}
-	case "vault":
+	case typeVault:
 		if d.VaultAddress == "" {
-			return fmt.Errorf("destination.vault_address is required for vault destination")
+			return errors.New("destination.vault_address is required for vault destination")
 		}
 		if d.VaultPath == "" {
-			return fmt.Errorf("destination.vault_path is required for vault destination")
+			return errors.New("destination.vault_path is required for vault destination")
 		}
-	case "etcd":
+	case typeEtcd:
 		if len(d.EtcdEndpoints) == 0 {
-			return fmt.Errorf("destination.etcd_endpoints is required for etcd destination")
+			return errors.New("destination.etcd_endpoints is required for etcd destination")
 		}
-	case "kubernetes":
+	case typeKubernetes:
 		if d.KubeNamespace == "" {
-			return fmt.Errorf("destination.kube_namespace is required for kubernetes destination")
+			return errors.New("destination.kube_namespace is required for kubernetes destination")
 		}
 	}
 	return nil

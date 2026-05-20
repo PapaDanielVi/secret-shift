@@ -3,10 +3,17 @@ package github
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/PapaDanielVi/secret-shift/internal/provider"
 	gogithub "github.com/google/go-github/v68/github"
 	"golang.org/x/oauth2"
+)
+
+const (
+	secretTypeSecret = "secret"
+	secretTypeEnv    = "env"
+	maxPerPage       = 100
 )
 
 type Provider struct {
@@ -74,11 +81,11 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 			continue
 		}
 		if exists && p.strategy == "report" {
-			fmt.Printf("  [report] %s %s already exists, skipping\n", s.Type, s.Name)
+			slog.Info("Secret already exists, skipping", "type", s.Type, "name", s.Name)
 			continue
 		}
 
-		if s.Type == "secret" {
+		if s.Type == secretTypeSecret {
 			if err := p.createSecret(ctx, s.Name, s.Value); err != nil {
 				return fmt.Errorf("create secret %s: %w", s.Name, err)
 			}
@@ -94,7 +101,7 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 
 func (p *Provider) listActionSecrets(ctx context.Context) ([]provider.Secret, error) {
 	var result []provider.Secret
-	opts := &gogithub.ListOptions{PerPage: 100}
+	opts := &gogithub.ListOptions{PerPage: maxPerPage}
 
 	for {
 		secrets, resp, err := p.client.Actions.ListRepoSecrets(ctx, p.owner, p.repo, opts)
@@ -104,7 +111,7 @@ func (p *Provider) listActionSecrets(ctx context.Context) ([]provider.Secret, er
 		for _, sec := range secrets.Secrets {
 			result = append(result, provider.Secret{
 				Name: sec.Name,
-				Type: "secret",
+				Type: secretTypeSecret,
 			})
 		}
 		if resp.NextPage == 0 {
@@ -118,7 +125,7 @@ func (p *Provider) listActionSecrets(ctx context.Context) ([]provider.Secret, er
 
 func (p *Provider) listVariables(ctx context.Context) ([]provider.Secret, error) {
 	var result []provider.Secret
-	opts := &gogithub.ListOptions{PerPage: 100}
+	opts := &gogithub.ListOptions{PerPage: maxPerPage}
 
 	for {
 		vars, resp, err := p.client.Actions.ListRepoVariables(ctx, p.owner, p.repo, opts)
@@ -129,7 +136,7 @@ func (p *Provider) listVariables(ctx context.Context) ([]provider.Secret, error)
 			result = append(result, provider.Secret{
 				Name:  v.Name,
 				Value: v.Value,
-				Type:  "env",
+				Type:  secretTypeEnv,
 			})
 		}
 		if resp.NextPage == 0 {
@@ -144,7 +151,7 @@ func (p *Provider) listVariables(ctx context.Context) ([]provider.Secret, error)
 func (p *Provider) listExisting(ctx context.Context) (map[string]bool, error) {
 	existing := make(map[string]bool)
 
-	opts := &gogithub.ListOptions{PerPage: 100}
+	opts := &gogithub.ListOptions{PerPage: maxPerPage}
 	for {
 		secrets, resp, err := p.client.Actions.ListRepoSecrets(ctx, p.owner, p.repo, opts)
 		if err != nil {

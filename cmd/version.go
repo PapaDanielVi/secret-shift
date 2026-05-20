@@ -6,11 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	// Version is set at build time via ldflags.
-	// Defaults to "dev" when not built with a tag.
-	Version = "dev"
-)
+// Version is set at build time via ldflags.
+// Defaults to "dev" when not built with a tag.
+var Version = "dev"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",

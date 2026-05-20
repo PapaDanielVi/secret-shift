@@ -3,11 +3,15 @@ package gitlab
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/PapaDanielVi/secret-shift/internal/provider"
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
+const maxPerPage = 100
+
+// Provider implements source.Source and destination.Destination for GitLab.
 type Provider struct {
 	client    *gogitlab.Client
 	projectID string
@@ -33,12 +37,12 @@ func New(token, projectID, url, strategy string) (*Provider, error) {
 		strategy:  strategy,
 	}, nil
 }
-
+// Read fetches all project variables from GitLab.
 func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 	var result []provider.Secret
 
 	opts := &gogitlab.ListProjectVariablesOptions{
-		ListOptions: gogitlab.ListOptions{PerPage: 100},
+		ListOptions: gogitlab.ListOptions{PerPage: maxPerPage},
 	}
 
 	for {
@@ -62,6 +66,7 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 	return result, nil
 }
 
+// Write creates or updates project variables in GitLab.
 func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 	existing, err := p.listExisting(ctx)
 	if err != nil {
@@ -74,7 +79,7 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 			continue
 		}
 		if exists && p.strategy == "report" {
-			fmt.Printf("  [report] variable %s already exists, skipping\n", s.Name)
+			slog.Info("Variable already exists, skipping", "name", s.Name)
 			continue
 		}
 
@@ -99,7 +104,7 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 func (p *Provider) listExisting(ctx context.Context) (map[string]bool, error) {
 	existing := make(map[string]bool)
 	opts := &gogitlab.ListProjectVariablesOptions{
-		ListOptions: gogitlab.ListOptions{PerPage: 100},
+		ListOptions: gogitlab.ListOptions{PerPage: maxPerPage},
 	}
 
 	for {

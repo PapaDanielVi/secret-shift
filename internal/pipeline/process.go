@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"regexp"
+	"slices"
 
 	"github.com/PapaDanielVi/secret-shift/internal/config"
 	"github.com/PapaDanielVi/secret-shift/internal/source"
@@ -48,24 +49,14 @@ func (p *Processor) Process(secrets []source.Secret) []source.Secret {
 }
 
 func (p *Processor) excludeType(t string) bool {
-	for _, et := range p.cfg.ExcludeTypes {
-		if et == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(p.cfg.ExcludeTypes, t)
 }
 
 func (p *Processor) includeType(t string) bool {
 	if len(p.cfg.IncludeTypes) == 0 {
 		return true
 	}
-	for _, it := range p.cfg.IncludeTypes {
-		if it == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(p.cfg.IncludeTypes, t)
 }
 
 func (p *Processor) matchExclude(name string) bool {
