@@ -53,18 +53,3 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
-## 5. Bubble Tea v2 Patterns
-
-**Import paths:** `charm.land/bubbletea/v2` and `charm.land/bubbles/v2` (vanity domains, not `github.com/charmbracelet/`).
-
-**Key differences from v1:**
-- `tea.KeyMsg` is now an interface; use `tea.KeyPressMsg` for key presses
-- `msg.Type` → `msg.Key().Code` (returns a rune constant like `tea.KeyEnter`)
-- `tea.KeyCtrlC` doesn't exist — check `key.Code == 'c' && key.Mod == tea.ModCtrl`
-- `View()` returns `tea.View`, not `string` — use `tea.NewView("content")`
-- `textinput.Model.Update()` must be called with key messages for typing to work
-- Use `textinput.Model.Focus()` / `Blur()` to activate/deactivate input (not cursor toggling)
-- `textinput.Model.Reset()` clears the input value
-
-**Common pitfall:** If text input doesn't respond to typing, the `Update` method is likely not forwarding `tea.KeyPressMsg` to the focused `textinput.Model.Update()`. Always check input forwarding first.
