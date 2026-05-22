@@ -69,3 +69,43 @@ This applies to:
 - `provider/gitlab.New()` — retained for interface consistency
 
 Providers that don't need network initialization during construction (vault, etcd, kubernetes, file) do not take a context in `New()`. Context is passed at the method level (`Read(ctx)`, `Write(ctx)`) for all providers.
+
+**Registry pattern:**
+
+All providers register themselves via `init()` in `internal/provider/registry.go`. Each provider provides a `SourceFactory` and `DestFactory` function. The pipeline uses `provider.CreateSource()` and `provider.CreateDestination()` to construct providers from config, passing options as `map[string]any`.
+
+When adding a new provider:
+1. Implement `Source` and/or `Destination` interfaces
+2. Add `init()` that calls `provider.Register()`
+3. Add a `getString()` helper in the provider package for extracting string options
+4. Update `pipeline.go` `buildSourceOpts()` and `buildDestOpts()` to map config fields
+
+**Per-step environment variables:**
+
+Source and destination each resolve tokens independently. Resolution order:
+1. Direct config value (`token` field)
+2. `token_env` field (custom env var name)
+3. `SECRET_SHIFT_SRC_<PROVIDER>_TOKEN` or `SECRET_SHIFT_DST_<PROVIDER>_TOKEN`
+
+The suffix is uppercase provider name: `GITHUB`, `GITLAB`, `VAULT`, `ETCD`, `KUBERNETES`, `FILE`.
+
+## 6. File Provider
+
+The file provider (`internal/provider/file/`) implements both `Source` and `Destination`. It supports:
+- JSON and YAML formats
+- AES-256-GCM encryption (same encrypt/decrypt for both read and write)
+- Default format is JSON if not specified
+
+## 7. Server Mode
+
+The health server (`internal/server/health.go`) uses only the standard library (`net/http`). It tracks sync success/error with mutex-protected timestamps and atomic counters. Endpoints:
+- `/healthz` — always 200 (liveness)
+- `/readyz` — 200 after first successful sync, 503 otherwise (readiness)
+- `/status` — JSON with sync count, error count, timestamps
+
+## 8. Testing Conventions
+
+- Registry tests live in `internal/provider/registry_test.go` as `package provider_test` with blank imports (`_ "..."`) to trigger `init()` functions
+- Health server tests use `httptest.NewRecorder` for handler tests and an actual HTTP server on port 18080 for integration tests
+- Provider tests use compile-time interface checks: `var _ provider.Source = (*Provider)(nil)`
+- `t.TempDir()` for file-based tests
