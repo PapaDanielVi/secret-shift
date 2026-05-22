@@ -1,3 +1,4 @@
+// Package etcd implements a provider for etcd key-value store.
 package etcd
 
 import (
@@ -8,6 +9,50 @@ import (
 	"github.com/PapaDanielVi/secret-shift/internal/provider"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
+
+func init() {
+	provider.Register(provider.Registration{
+		Name: provider.Etcd,
+		SourceFactory: func(_ context.Context, opts map[string]any) (provider.Source, error) {
+			endpoints := getStringSlice(opts, "etcd_endpoints")
+			prefix := getString(opts, "etcd_prefix")
+			username := getString(opts, "etcd_username")
+			password := getString(opts, "etcd_password")
+			return New(endpoints, prefix, username, password)
+		},
+		DestFactory: func(_ context.Context, opts map[string]any) (provider.Destination, error) {
+			endpoints := getStringSlice(opts, "etcd_endpoints")
+			prefix := getString(opts, "etcd_prefix")
+			username := getString(opts, "etcd_username")
+			password := getString(opts, "etcd_password")
+			return New(endpoints, prefix, username, password)
+		},
+	})
+}
+
+func getString(opts map[string]any, key string) string {
+	if v, ok := opts[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func getStringSlice(opts map[string]any, key string) []string {
+	if v, ok := opts[key]; ok {
+		if arr, ok := v.([]any); ok {
+			result := make([]string, 0, len(arr))
+			for _, item := range arr {
+				if s, ok := item.(string); ok {
+					result = append(result, s)
+				}
+			}
+			return result
+		}
+	}
+	return nil
+}
 
 type Provider struct {
 	client *clientv3.Client

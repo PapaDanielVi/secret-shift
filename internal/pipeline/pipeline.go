@@ -6,20 +6,14 @@ import (
 	"log/slog"
 
 	"github.com/PapaDanielVi/secret-shift/internal/config"
-	"github.com/PapaDanielVi/secret-shift/internal/destination"
-	dstfile "github.com/PapaDanielVi/secret-shift/internal/destination/file"
-	provideretcd "github.com/PapaDanielVi/secret-shift/internal/provider/etcd"
-	providergithub "github.com/PapaDanielVi/secret-shift/internal/provider/github"
-	providergitlab "github.com/PapaDanielVi/secret-shift/internal/provider/gitlab"
-	providerk8s "github.com/PapaDanielVi/secret-shift/internal/provider/kubernetes"
-	providervault "github.com/PapaDanielVi/secret-shift/internal/provider/vault"
-	"github.com/PapaDanielVi/secret-shift/internal/source"
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 )
 
 type Pipeline struct {
-	src  source.Source
-	dst  destination.Destination
-	proc *Processor
+	src    provider.Source
+	dst    provider.Destination
+	proc   *Processor
+	dryRun bool
 }
 
 func (p *Pipeline) Run(ctx context.Context) error {
@@ -34,6 +28,14 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	processed := p.proc.Process(secrets)
 	slog.Info("After processing", "count", len(processed))
 
+	if p.dryRun {
+		slog.Info("Dry run — skipping write", "count", len(processed))
+		for _, s := range processed {
+			slog.Debug("Would write secret", "name", s.Name, "type", s.Type)
+		}
+		return nil
+	}
+
 	if err := p.dst.Write(ctx, processed); err != nil {
 		return fmt.Errorf("write to destination: %w", err)
 	}
@@ -42,73 +44,117 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	return nil
 }
 
-func Build(cfg *config.Config) (*Pipeline, error) {
-	p := &Pipeline{}
-
-	if err := p.initSource(cfg); err != nil {
-		return nil, err
-	}
-	if err := p.initDestination(cfg); err != nil {
-		return nil, err
+func Build(ctx context.Context, cfg *config.Config) (*Pipeline, error) {
+	p := &Pipeline{
+		dryRun: cfg.DryRun,
 	}
 
-	p.proc = NewProcessor(cfg.Process)
+	if err := p.initSource(ctx, cfg); err != nil {
+		return nil, err
+	}
+	if err := p.initDestination(ctx, cfg); err != nil {
+		return nil, err
+	}
+
+	proc, err := NewProcessor(cfg.Process)
+	if err != nil {
+		return nil, fmt.Errorf("create processor: %w", err)
+	}
+	p.proc = proc
 	return p, nil
 }
 
-func (p *Pipeline) initSource(cfg *config.Config) error {
+func (p *Pipeline) initSource(ctx context.Context, cfg *config.Config) error {
+	opts := buildSourceOpts(cfg.Source)
+
 	var err error
-	switch cfg.Source.Type {
-	case "github":
-		p.src, err = providergithub.New(cfg.Source.Token, cfg.Source.Repo, cfg.Source.URL, "replace")
-	case "gitlab":
-		p.src, err = providergitlab.New(cfg.Source.Token, cfg.Source.ProjectID, cfg.Source.URL, "replace")
-	case "vault":
-		p.src, err = providervault.New(cfg.Source.Token, cfg.Source.VaultAddress, cfg.Source.VaultPath, cfg.Source.VaultMount)
-	case "etcd":
-		p.src, err = provideretcd.New(cfg.Source.EtcdEndpoints, cfg.Source.EtcdPrefix, cfg.Source.EtcdUsername, cfg.Source.EtcdPassword)
-	case "kubernetes":
-		p.src, err = providerk8s.New(cfg.Source.KubeConfig, cfg.Source.KubeNamespace, cfg.Source.KubeSecretName, cfg.Source.KubeLabel)
-	default:
-		return fmt.Errorf("unsupported source type: %s", cfg.Source.Type)
-	}
+	p.src, err = provider.CreateSource(ctx, cfg.Source.Type, opts)
 	if err != nil {
 		return fmt.Errorf("create source: %w", err)
 	}
 	return nil
 }
 
-func (p *Pipeline) initDestination(cfg *config.Config) error {
+func (p *Pipeline) initDestination(ctx context.Context, cfg *config.Config) error {
+	opts := buildDestOpts(cfg.Destination)
+
 	var err error
-	switch cfg.Destination.Type {
-	case "file":
-		p.dst = dstfile.New(cfg.Destination.Path, cfg.Destination.Format, cfg.Destination.Encrypt, cfg.Destination.EncryptKey)
-	case "github":
-		p.dst, err = providergithub.New(cfg.Destination.Token, cfg.Destination.Repo, cfg.Destination.URL, cfg.Destination.ConflictStrategy)
-	case "gitlab":
-		p.dst, err = providergitlab.New(cfg.Destination.Token, cfg.Destination.ProjectID, cfg.Destination.URL, cfg.Destination.ConflictStrategy)
-	case "vault":
-		p.dst, err = providervault.New(cfg.Destination.Token, cfg.Destination.VaultAddress, cfg.Destination.VaultPath, cfg.Destination.VaultMount)
-	case "etcd":
-		p.dst, err = provideretcd.New(cfg.Destination.EtcdEndpoints, cfg.Destination.EtcdPrefix, cfg.Destination.EtcdUsername, cfg.Destination.EtcdPassword)
-	case "kubernetes":
-		p.dst, err = providerk8s.New(cfg.Destination.KubeConfig, cfg.Destination.KubeNamespace, cfg.Destination.KubeSecretName, cfg.Destination.KubeLabel)
-	default:
-		return fmt.Errorf("unsupported destination type: %s", cfg.Destination.Type)
-	}
+	p.dst, err = provider.CreateDestination(ctx, cfg.Destination.Type, opts)
 	if err != nil {
 		return fmt.Errorf("create destination: %w", err)
 	}
 	return nil
 }
 
-var _ source.Source = (*providergithub.Provider)(nil)
-var _ destination.Destination = (*providergithub.Provider)(nil)
-var _ source.Source = (*providergitlab.Provider)(nil)
-var _ destination.Destination = (*providergitlab.Provider)(nil)
-var _ source.Source = (*providervault.Provider)(nil)
-var _ destination.Destination = (*providervault.Provider)(nil)
-var _ source.Source = (*provideretcd.Provider)(nil)
-var _ destination.Destination = (*provideretcd.Provider)(nil)
-var _ source.Source = (*providerk8s.Provider)(nil)
-var _ destination.Destination = (*providerk8s.Provider)(nil)
+func buildSourceOpts(src config.SourceConfig) map[string]any {
+	opts := map[string]any{
+		"token":      src.Token,
+		"project_id": src.ProjectID,
+	}
+
+	switch src.Type {
+	case provider.GitHub:
+		opts["repo"] = src.Repo
+		opts["url"] = src.URL
+	case provider.GitLab:
+		opts["url"] = src.URL
+	case provider.Vault:
+		opts["vault_address"] = src.VaultAddress
+		opts["vault_path"] = src.VaultPath
+		opts["vault_mount"] = src.VaultMount
+	case provider.Etcd:
+		opts["etcd_endpoints"] = src.EtcdEndpoints
+		opts["etcd_prefix"] = src.EtcdPrefix
+		opts["etcd_username"] = src.EtcdUsername
+		opts["etcd_password"] = src.EtcdPassword
+	case provider.Kubernetes:
+		opts["kube_config"] = src.KubeConfig
+		opts["kube_namespace"] = src.KubeNamespace
+		opts["kube_secret_name"] = src.KubeSecretName
+		opts["kube_label"] = src.KubeLabel
+	case provider.File:
+		opts["path"] = src.Path
+		opts["format"] = src.Format
+		opts["encrypt"] = src.Encrypt
+		opts["encrypt_key"] = src.EncryptKey
+	}
+
+	return opts
+}
+
+func buildDestOpts(dst config.DestinationConfig) map[string]any {
+	opts := map[string]any{
+		"token":      dst.Token,
+		"project_id": dst.ProjectID,
+		"strategy":   dst.ConflictStrategy,
+	}
+
+	switch dst.Type {
+	case provider.GitHub:
+		opts["repo"] = dst.Repo
+		opts["url"] = dst.URL
+	case provider.GitLab:
+		opts["url"] = dst.URL
+	case provider.Vault:
+		opts["vault_address"] = dst.VaultAddress
+		opts["vault_path"] = dst.VaultPath
+		opts["vault_mount"] = dst.VaultMount
+	case provider.Etcd:
+		opts["etcd_endpoints"] = dst.EtcdEndpoints
+		opts["etcd_prefix"] = dst.EtcdPrefix
+		opts["etcd_username"] = dst.EtcdUsername
+		opts["etcd_password"] = dst.EtcdPassword
+	case provider.Kubernetes:
+		opts["kube_config"] = dst.KubeConfig
+		opts["kube_namespace"] = dst.KubeNamespace
+		opts["kube_secret_name"] = dst.KubeSecretName
+		opts["kube_label"] = dst.KubeLabel
+	case provider.File:
+		opts["path"] = dst.Path
+		opts["format"] = dst.Format
+		opts["encrypt"] = dst.Encrypt
+		opts["encrypt_key"] = dst.EncryptKey
+	}
+
+	return opts
+}

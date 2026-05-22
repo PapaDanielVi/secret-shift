@@ -1,0 +1,23 @@
+{
+  "source": {
+    "type": "file",
+    "path": "./secrets.json",
+    "format": "json",
+    "encrypt": false
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "file",
+    "path": "./output/secrets-copy.json",
+    "format": "json",
+    "encrypt": false
+  },
+  "dry_run": false
+}

@@ -15,6 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -24,23 +26,13 @@ jobs:
       - name: Run tests
         run: go test -race ./...
 
-      - name: Zip source code
-        run: |
-          VERSION=${GITHUB_REF_NAME}
-          zip -r "secret-shift-${VERSION}-source.zip" \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude "coverage.out" \
-            --exclude "*.test" \
-            .
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
-          files: "secret-shift-*-source.zip"
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update-homebrew:
     name: Update Homebrew Formula

@@ -1,0 +1,24 @@
+{
+  "source": {
+    "type": "github",
+    "repo": "owner/repo",
+    "token": "YOUR_GITHUB_TOKEN",
+    // "url": "https://git.mycompany.com/api/v3" // Optional: for GitHub Enterprise
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "gitlab",
+    "project_id": "YOUR_PROJECT_ID",
+    "token": "YOUR_GITLAB_TOKEN",
+    "conflict_strategy": "replace"
+    // "url": "https://gitlab.mycompany.com" // Optional: for self-hosted GitLab
+  },
+  "dry_run": false
+}

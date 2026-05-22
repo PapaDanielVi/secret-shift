@@ -1,3 +1,4 @@
+// Package gitlab implements a provider for GitLab project variables.
 package gitlab
 
 import (
@@ -9,6 +10,37 @@ import (
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
+func init() {
+	provider.Register(provider.Registration{
+		Name: provider.GitLab,
+		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+			token := getString(opts, "token")
+			projectID := getString(opts, "project_id")
+			url := getString(opts, "url")
+			return New(ctx, token, projectID, url, "replace")
+		},
+		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+			token := getString(opts, "token")
+			projectID := getString(opts, "project_id")
+			url := getString(opts, "url")
+			strategy := getString(opts, "strategy")
+			if strategy == "" {
+				strategy = "replace"
+			}
+			return New(ctx, token, projectID, url, strategy)
+		},
+	})
+}
+
+func getString(opts map[string]any, key string) string {
+	if v, ok := opts[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
 const maxPerPage = 100
 
 // Provider implements source.Source and destination.Destination for GitLab.
@@ -18,7 +50,8 @@ type Provider struct {
 	strategy  string
 }
 
-func New(token, projectID, url, strategy string) (*Provider, error) {
+// New creates a GitLab provider for the given project.
+func New(_ context.Context, token, projectID, url, strategy string) (*Provider, error) {
 	var client *gogitlab.Client
 	var err error
 
@@ -37,8 +70,9 @@ func New(token, projectID, url, strategy string) (*Provider, error) {
 		strategy:  strategy,
 	}, nil
 }
+
 // Read fetches all project variables from GitLab.
-func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) { //nolint:revive // doc comment present but revive false positive
+func (p *Provider) Read(_ context.Context) ([]provider.Secret, error) {
 	var result []provider.Secret
 
 	opts := &gogitlab.ListProjectVariablesOptions{
@@ -102,8 +136,9 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 }
 
 // listExisting fetches all existing project variable names.
-func (p *Provider) listExisting(ctx context.Context) (map[string]bool, error) {
-	_ = ctx
+func (p *Provider) listExisting(_ context.Context) (map[string]bool, error) {
+	// The GitLab client manages its own request context; ctx is retained in the
+	// signature for interface consistency and future use.
 	existing := make(map[string]bool)
 	opts := &gogitlab.ListProjectVariablesOptions{
 		ListOptions: gogitlab.ListOptions{PerPage: maxPerPage},

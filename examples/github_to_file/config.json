@@ -1,0 +1,24 @@
+{
+  "source": {
+    "type": "github",
+    "repo": "owner/repo",
+    "token": "YOUR_GITHUB_TOKEN",
+    // "url": "https://git.mycompany.com/api/v3" // Optional: for GitHub Enterprise
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "file",
+    "path": "./output/github-secrets.json",
+    "format": "json",
+    "encrypt": false
+    // "encrypt_key": "my-secret-key" // Required if encrypt is true
+  },
+  "dry_run": false
+}

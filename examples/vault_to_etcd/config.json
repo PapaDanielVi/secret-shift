@@ -1,0 +1,25 @@
+{
+  "source": {
+    "type": "vault",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "myapp/config",
+    "token": "YOUR_VAULT_TOKEN"
+    // "vault_mount": "secret" // Optional, defaults to "secret"
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "etcd",
+    "etcd_endpoints": ["http://localhost:2379"],
+    "etcd_prefix": "/myapp/"
+    // "etcd_username": "root",    // Optional: for authenticated etcd
+    // "etcd_password": "password" // Optional: for authenticated etcd
+  },
+  "dry_run": false
+}

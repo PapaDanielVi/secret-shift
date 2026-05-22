@@ -1,3 +1,4 @@
+// Package github implements a provider for GitHub repository secrets and variables.
 package github
 
 import (
@@ -9,6 +10,37 @@ import (
 	gogithub "github.com/google/go-github/v68/github"
 	"golang.org/x/oauth2"
 )
+
+func init() {
+	provider.Register(provider.Registration{
+		Name: provider.GitHub,
+		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+			token := getString(opts, "token")
+			repo := getString(opts, "repo")
+			url := getString(opts, "url")
+			return New(ctx, token, repo, url, "replace")
+		},
+		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+			token := getString(opts, "token")
+			repo := getString(opts, "repo")
+			url := getString(opts, "url")
+			strategy := getString(opts, "strategy")
+			if strategy == "" {
+				strategy = "replace"
+			}
+			return New(ctx, token, repo, url, strategy)
+		},
+	})
+}
+
+func getString(opts map[string]any, key string) string {
+	if v, ok := opts[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
 
 const (
 	secretTypeSecret = "secret"
@@ -23,13 +55,12 @@ type Provider struct {
 	strategy string
 }
 
-func New(token, repoURL, url, strategy string) (*Provider, error) {
+func New(ctx context.Context, token, repoURL, url, strategy string) (*Provider, error) {
 	owner, name, err := parseRepo(repoURL)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
 

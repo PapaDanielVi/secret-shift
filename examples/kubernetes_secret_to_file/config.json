@@ -1,0 +1,24 @@
+{
+  "source": {
+    "type": "kubernetes",
+    "kube_namespace": "default",
+    "kube_secret_name": "my-app-secrets",
+    // "kube_config": "~/.kube/config" // Optional, defaults to ~/.kube/config
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "file",
+    "path": "./output/k8s-secrets.json",
+    "format": "json",
+    "encrypt": false
+    // "encrypt_key": "my-secret-key" // Required if encrypt is true
+  },
+  "dry_run": false
+}

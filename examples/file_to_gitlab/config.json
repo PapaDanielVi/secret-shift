@@ -1,0 +1,23 @@
+{
+  "source": {
+    "type": "file",
+    "path": "./secrets.json",
+    "format": "json",
+    "encrypt": false
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "gitlab",
+    "conflict_strategy": "replace",
+    "project_id": "12345",
+    "token_redacted": "YOUR_GITLAB_TOKEN_HERE"
+  },
+  "dry_run": false
+}

@@ -4,12 +4,21 @@ import (
 	"testing"
 
 	"github.com/PapaDanielVi/secret-shift/internal/config"
-	"github.com/PapaDanielVi/secret-shift/internal/source"
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 )
 
+func newTestProcessor(t *testing.T, cfg config.ProcessConfig) *Processor {
+	t.Helper()
+	p, err := NewProcessor(cfg)
+	if err != nil {
+		t.Fatalf("NewProcessor: %v", err)
+	}
+	return p
+}
+
 func TestProcess_Passthrough(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{})
-	input := []source.Secret{
+	p := newTestProcessor(t, config.ProcessConfig{})
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "API_KEY", Value: "abc123", Type: "secret"},
 	}
@@ -23,8 +32,8 @@ func TestProcess_Passthrough(t *testing.T) {
 }
 
 func TestProcess_AddPrefix(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{AddPrefix: "PROD_"})
-	input := []source.Secret{
+	p := newTestProcessor(t, config.ProcessConfig{AddPrefix: "PROD_"})
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 	}
 	result := p.Process(input)
@@ -37,8 +46,8 @@ func TestProcess_AddPrefix(t *testing.T) {
 }
 
 func TestProcess_AddSuffix(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{AddSuffix: "_V2"})
-	input := []source.Secret{
+	p := newTestProcessor(t, config.ProcessConfig{AddSuffix: "_V2"})
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 	}
 	result := p.Process(input)
@@ -48,8 +57,8 @@ func TestProcess_AddSuffix(t *testing.T) {
 }
 
 func TestProcess_IncludeRegex(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{IncludeRegex: "^DB_"})
-	input := []source.Secret{
+	p := newTestProcessor(t, config.ProcessConfig{IncludeRegex: "^DB_"})
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "API_KEY", Value: "abc", Type: "secret"},
 		{Name: "DB_PORT", Value: "5432", Type: "env"},
@@ -66,8 +75,8 @@ func TestProcess_IncludeRegex(t *testing.T) {
 }
 
 func TestProcess_ExcludeRegex(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{ExcludeRegex: "^DEBUG_"})
-	input := []source.Secret{
+	p := newTestProcessor(t, config.ProcessConfig{ExcludeRegex: "^DEBUG_"})
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "DEBUG_MODE", Value: "true", Type: "env"},
 	}
@@ -81,8 +90,8 @@ func TestProcess_ExcludeRegex(t *testing.T) {
 }
 
 func TestProcess_IncludeTypes(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{IncludeTypes: []string{"secret"}})
-	input := []source.Secret{
+	p := newTestProcessor(t, config.ProcessConfig{IncludeTypes: []string{"secret"}})
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "API_KEY", Value: "abc", Type: "secret"},
 	}
@@ -96,8 +105,8 @@ func TestProcess_IncludeTypes(t *testing.T) {
 }
 
 func TestProcess_ExcludeTypes(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{ExcludeTypes: []string{"env"}})
-	input := []source.Secret{
+	p := newTestProcessor(t, config.ProcessConfig{ExcludeTypes: []string{"env"}})
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "API_KEY", Value: "abc", Type: "secret"},
 	}
@@ -111,12 +120,12 @@ func TestProcess_ExcludeTypes(t *testing.T) {
 }
 
 func TestProcess_Combined(t *testing.T) {
-	p := NewProcessor(config.ProcessConfig{
+	p := newTestProcessor(t, config.ProcessConfig{
 		AddPrefix:    "PROD_",
 		IncludeRegex: "^DB_",
 		IncludeTypes: []string{"env"},
 	})
-	input := []source.Secret{
+	input := []provider.Secret{
 		{Name: "DB_HOST", Value: "localhost", Type: "env"},
 		{Name: "DB_PORT", Value: "5432", Type: "env"},
 		{Name: "API_KEY", Value: "abc", Type: "secret"},
@@ -131,5 +140,19 @@ func TestProcess_Combined(t *testing.T) {
 	}
 	if result[1].Name != "PROD_DB_PORT" {
 		t.Errorf("expected PROD_DB_PORT, got %s", result[1].Name)
+	}
+}
+
+func TestNewProcessor_InvalidExcludeRegex(t *testing.T) {
+	_, err := NewProcessor(config.ProcessConfig{ExcludeRegex: "["})
+	if err == nil {
+		t.Fatal("expected error for invalid exclude regex")
+	}
+}
+
+func TestNewProcessor_InvalidIncludeRegex(t *testing.T) {
+	_, err := NewProcessor(config.ProcessConfig{IncludeRegex: "["})
+	if err == nil {
+		t.Fatal("expected error for invalid include regex")
 	}
 }

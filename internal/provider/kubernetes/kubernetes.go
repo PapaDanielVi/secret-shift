@@ -1,3 +1,4 @@
+// Package kubernetes implements a provider that reads/writes secrets from/to Kubernetes Secrets and ConfigMaps.
 package kubernetes
 
 import (
@@ -14,6 +15,35 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+func init() {
+	provider.Register(provider.Registration{
+		Name: provider.Kubernetes,
+		SourceFactory: func(_ context.Context, opts map[string]any) (provider.Source, error) {
+			kubeConfig := getString(opts, "kube_config")
+			namespace := getString(opts, "kube_namespace")
+			secretName := getString(opts, "kube_secret_name")
+			labelSelector := getString(opts, "kube_label")
+			return New(kubeConfig, namespace, secretName, labelSelector)
+		},
+		DestFactory: func(_ context.Context, opts map[string]any) (provider.Destination, error) {
+			kubeConfig := getString(opts, "kube_config")
+			namespace := getString(opts, "kube_namespace")
+			secretName := getString(opts, "kube_secret_name")
+			labelSelector := getString(opts, "kube_label")
+			return New(kubeConfig, namespace, secretName, labelSelector)
+		},
+	})
+}
+
+func getString(opts map[string]any, key string) string {
+	if v, ok := opts[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
 
 type Provider struct {
 	clientset     *kubernetes.Clientset

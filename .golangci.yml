@@ -34,7 +34,7 @@ formatters:
       # with the given prefixes are grouped after 3rd-party packages.
       # Default: []
       local-prefixes:
-        - github.com/PapaDanielVi/poya
+        - github.com/PapaDanielVi/secret-shift
 
     golines:
       # Target maximum line length.
@@ -52,7 +52,7 @@ linters:
     - copyloopvar # detects places where loop variables are copied (Go 1.22+)
     - cyclop # checks function and package cyclomatic complexity
     - depguard # checks if package imports are in a list of acceptable packages
-    - dupl # tool for code clone detection
+    # - dupl # tool for code clone detection
     - durationcheck # checks for two durations multiplied together
     - embeddedstructfieldcheck # checks embedded types in structs
     - errcheck # checking for unchecked errors, these unchecked errors can be critical bugs in some cases
@@ -66,7 +66,7 @@ linters:
     - funlen # tool for detection of long functions
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
     - gochecknoglobals # checks that no global variables exist
-    - gochecknoinits # checks that no init functions are present in Go code
+    # - gochecknoinits # checks that no init functions are present in Go code
     - gochecksumtype # checks exhaustiveness on Go "sum types"
     - gocognit # computes and checks the cognitive complexity of functions
     - goconst # finds repeated strings that could be replaced by a constant
@@ -85,7 +85,7 @@ linters:
     - loggercheck # checks key value pairs for common logger libraries (kitlog,klog,logr,zap)
     - makezero # finds slice declarations with non-zero initial length
     - mirror # reports wrong mirror patterns of bytes/strings usage
-    - mnd # detects magic numbers
+    # - mnd # detects magic numbers
     - modernize # suggests simplifications to Go code, using modern language and library features
     - musttag # enforces field tags in (un)marshaled structs
     - nakedret # finds naked returns in functions greater than a specified function length
@@ -262,7 +262,6 @@ linters:
         # public libs
         - ^github.com/Shopify/sarama.Config$
         - ^github.com/Shopify/sarama.ProducerMessage$
-        - ^github.com/mitchellh/mapstructure.DecoderConfig$
         - ^github.com/prometheus/client_golang/.+Opts$
         - ^github.com/spf13/cobra.Command$
         - ^github.com/spf13/cobra.CompletionOptions$
@@ -464,32 +463,6 @@ linters:
           - gochecknoinits
           - gochecknoglobals
           - revive
-      - path: 'internal/tui/'
-        linters:
-          - gochecknoglobals
-          - recvcheck
-          - revive
-          - gocritic
-          - mnd
-          - goconst
-          - nonamedreturns
-          - gocognit
-      - path: 'internal/pkg/profile/'
-        linters:
-          - gosec
-          - nestif
-          - revive
-          - gochecknoglobals
-          - gocognit
-      - path: 'internal/pkg/gitvault/'
-        linters:
-          - perfsprint
-      - path: 'internal/pkg/config/'
-        linters:
-          - errorlint
-      - path: 'internal/pkg/gitignore/'
-        linters:
-          - gosec
       - path: '.'
         linters:
           - recvcheck

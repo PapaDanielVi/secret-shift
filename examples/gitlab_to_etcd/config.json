@@ -1,0 +1,24 @@
+{
+  "source": {
+    "type": "gitlab",
+    "project_id": "YOUR_PROJECT_ID",
+    "token": "YOUR_GITLAB_TOKEN",
+    // "url": "https://gitlab.mycompany.com" // Optional: for self-hosted GitLab
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "etcd",
+    "etcd_endpoints": ["http://localhost:2379"],
+    "etcd_prefix": "/myapp/"
+    // "etcd_username": "root",    // Optional: for authenticated etcd
+    // "etcd_password": "password" // Optional: for authenticated etcd
+  },
+  "dry_run": false
+}

@@ -1,0 +1,25 @@
+{
+  "source": {
+    "type": "vault",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "myapp/config",
+    "token": "YOUR_VAULT_TOKEN"
+    // "vault_mount": "secret" // Optional, defaults to "secret"
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "file",
+    "path": "./output/vault-secrets.json",
+    "format": "json",
+    "encrypt": false
+    // "encrypt_key": "my-secret-key" // Required if encrypt is true
+  },
+  "dry_run": false
+}

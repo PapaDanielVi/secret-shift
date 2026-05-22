@@ -1,0 +1,23 @@
+{
+  "source": {
+    "type": "file",
+    "path": "./secrets.json",
+    "format": "json",
+    "encrypt": false
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "etcd",
+    "conflict_strategy": "replace",
+    "etcd_endpoints": ["http://localhost:2379"],
+    "etcd_prefix": "/my-app/"
+  },
+  "dry_run": false
+}
