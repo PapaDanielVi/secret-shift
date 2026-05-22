@@ -13,14 +13,14 @@ import (
 func init() {
 	provider.Register(provider.Registration{
 		Name: provider.Vault,
-		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+		SourceFactory: func(_ context.Context, opts map[string]any) (provider.Source, error) {
 			token := getString(opts, "token")
 			address := getString(opts, "vault_address")
 			path := getString(opts, "vault_path")
 			mount := getString(opts, "vault_mount")
 			return New(token, address, path, mount)
 		},
-		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+		DestFactory: func(_ context.Context, opts map[string]any) (provider.Destination, error) {
 			token := getString(opts, "token")
 			address := getString(opts, "vault_address")
 			path := getString(opts, "vault_path")

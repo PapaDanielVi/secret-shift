@@ -12,14 +12,14 @@ import (
 func init() {
 	provider.Register(provider.Registration{
 		Name: provider.Etcd,
-		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+		SourceFactory: func(_ context.Context, opts map[string]any) (provider.Source, error) {
 			endpoints := getStringSlice(opts, "etcd_endpoints")
 			prefix := getString(opts, "etcd_prefix")
 			username := getString(opts, "etcd_username")
 			password := getString(opts, "etcd_password")
 			return New(endpoints, prefix, username, password)
 		},
-		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+		DestFactory: func(_ context.Context, opts map[string]any) (provider.Destination, error) {
 			endpoints := getStringSlice(opts, "etcd_endpoints")
 			prefix := getString(opts, "etcd_prefix")
 			username := getString(opts, "etcd_username")

@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,7 +20,7 @@ import (
 func init() {
 	provider.Register(provider.Registration{
 		Name: provider.File,
-		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+		SourceFactory: func(_ context.Context, opts map[string]any) (provider.Source, error) {
 			return New(
 				getString(opts, "path"),
 				getString(opts, "format"),
@@ -27,7 +28,7 @@ func init() {
 				getString(opts, "encrypt_key"),
 			), nil
 		},
-		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+		DestFactory: func(_ context.Context, opts map[string]any) (provider.Destination, error) {
 			return New(
 				getString(opts, "path"),
 				getString(opts, "format"),
@@ -75,7 +76,7 @@ func New(path, format string, encrypt bool, encryptKey string) *Provider {
 	}
 }
 
-func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
+func (p *Provider) Read(_ context.Context) ([]provider.Secret, error) {
 	data, err := os.ReadFile(p.path)
 	if err != nil {
 		return nil, fmt.Errorf("read file %s: %w", p.path, err)
@@ -111,7 +112,7 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 	return result, nil
 }
 
-func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
+func (p *Provider) Write(_ context.Context, secrets []provider.Secret) error {
 	if err := os.MkdirAll(filepath.Dir(p.path), 0750); err != nil {
 		return fmt.Errorf("create directory: %w", err)
 	}
@@ -186,7 +187,7 @@ func (p *Provider) decryptData(ciphertext []byte) ([]byte, error) {
 
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
-		return nil, fmt.Errorf("ciphertext too short")
+		return nil, errors.New("ciphertext too short")
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]

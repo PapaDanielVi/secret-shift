@@ -64,14 +64,14 @@ type Config struct {
 
 // SourceConfig holds the source provider configuration.
 type SourceConfig struct {
-	Type      provider.Type `json:"type"`
-	ProjectID string        `json:"project_id"`
-
 	GitConfig
 	VaultConfig
 	EtcdConfig
 	KubernetesConfig
 	FileConfig
+
+	Type      provider.Type `json:"type"`
+	ProjectID string        `json:"project_id"`
 }
 
 // ProcessConfig holds the processing/filtering configuration.
@@ -86,15 +86,15 @@ type ProcessConfig struct {
 
 // DestinationConfig holds the destination provider configuration.
 type DestinationConfig struct {
-	Type             provider.Type `json:"type"`
-	ConflictStrategy string        `json:"conflict_strategy"`
-	ProjectID        string        `json:"project_id"`
-
 	GitConfig
 	VaultConfig
 	EtcdConfig
 	KubernetesConfig
 	FileConfig
+
+	Type             provider.Type `json:"type"`
+	ConflictStrategy string        `json:"conflict_strategy"`
+	ProjectID        string        `json:"project_id"`
 }
 
 // Load reads configuration from file and environment.

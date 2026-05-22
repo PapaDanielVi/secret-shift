@@ -18,14 +18,14 @@ import (
 func init() {
 	provider.Register(provider.Registration{
 		Name: provider.Kubernetes,
-		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+		SourceFactory: func(_ context.Context, opts map[string]any) (provider.Source, error) {
 			kubeConfig := getString(opts, "kube_config")
 			namespace := getString(opts, "kube_namespace")
 			secretName := getString(opts, "kube_secret_name")
 			labelSelector := getString(opts, "kube_label")
 			return New(kubeConfig, namespace, secretName, labelSelector)
 		},
-		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+		DestFactory: func(_ context.Context, opts map[string]any) (provider.Destination, error) {
 			kubeConfig := getString(opts, "kube_config")
 			namespace := getString(opts, "kube_namespace")
 			secretName := getString(opts, "kube_secret_name")

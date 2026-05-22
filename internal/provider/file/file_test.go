@@ -142,7 +142,7 @@ func TestFileWrite_CreatesDirectories(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestFileProvider_Interface(t *testing.T) {
+func TestFileProvider_Interface(_ *testing.T) {
 	var _ provider.Source = (*Provider)(nil)
 	var _ provider.Destination = (*Provider)(nil)
 }
