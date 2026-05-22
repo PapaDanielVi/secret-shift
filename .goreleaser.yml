@@ -1,6 +1,8 @@
 version: 2
 
-project_name: secret-shift
+before:
+  hooks:
+    - go mod tidy
 
 builds:
   - env:
@@ -16,25 +18,30 @@ builds:
       - "-s -w -X github.com/PapaDanielVi/secret-shift/cmd.Version={{ .Tag }}"
 
 archives:
-  - formats: [tar.gz]
+  - format: tar.gz
     name_template: >-
       {{ .ProjectName }}_
-      {{- .Version }}_
-      {{- .Os }}_
-      {{- .Arch }}
-    format_overrides:
-      - goos: windows
-        formats: [zip]
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
 
-checksum:
-  name_template: "checksums.txt"
+brews:
+  - repository:
+      owner: PapaDanielVi
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
 
-sboms:
-  - artifacts: archive
+    directory: Formula
 
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+
+    homepage: "https://github.com/PapaDanielVi/secret-shift"
+    description: "SecretShift is a CLI tool for migrating and syncing secrets and environment variables between providers"
+    license: "MIT"
+
+    test: |
+      system "#{bin}/secret-shift --version"
