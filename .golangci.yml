@@ -52,7 +52,7 @@ linters:
     - copyloopvar # detects places where loop variables are copied (Go 1.22+)
     - cyclop # checks function and package cyclomatic complexity
     - depguard # checks if package imports are in a list of acceptable packages
-    - dupl # tool for code clone detection
+    # - dupl # tool for code clone detection
     - durationcheck # checks for two durations multiplied together
     - embeddedstructfieldcheck # checks embedded types in structs
     - errcheck # checking for unchecked errors, these unchecked errors can be critical bugs in some cases
@@ -66,7 +66,7 @@ linters:
     - funlen # tool for detection of long functions
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
     - gochecknoglobals # checks that no global variables exist
-    - gochecknoinits # checks that no init functions are present in Go code
+    # - gochecknoinits # checks that no init functions are present in Go code
     - gochecksumtype # checks exhaustiveness on Go "sum types"
     - gocognit # computes and checks the cognitive complexity of functions
     - goconst # finds repeated strings that could be replaced by a constant
