@@ -25,7 +25,7 @@ var syncCmd = &cobra.Command{
 	Use:   "sync",
 	Short: "Execute a sync pipeline",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.Load(cfgFile)
+		cfg, err := config.Load(viper.GetViper(), cfgFile)
 		if err != nil {
 			return fmt.Errorf("load config: %w", err)
 		}
@@ -47,7 +47,7 @@ var syncCmd = &cobra.Command{
 			return fmt.Errorf("validate config: %w", err)
 		}
 
-		p, err := pipeline.Build(cfg)
+		p, err := pipeline.Build(cmd.Context(), cfg)
 		if err != nil {
 			return fmt.Errorf("build pipeline: %w", err)
 		}
@@ -78,7 +78,7 @@ func runPeriodic(ctx context.Context, p *pipeline.Pipeline, freq time.Duration) 
 	slog.Info("Starting periodic sync", "frequency", freq)
 
 	if err := p.Run(ctx); err != nil {
-		slog.Error("Sync error", "err", err)
+		slog.Error("sync error", "err", err)
 	}
 
 	for {
@@ -88,7 +88,7 @@ func runPeriodic(ctx context.Context, p *pipeline.Pipeline, freq time.Duration) 
 			return nil
 		case <-ticker.C:
 			if err := p.Run(ctx); err != nil {
-				slog.Error("Sync error", "err", err)
+				slog.Error("sync error", "err", err)
 			}
 		}
 	}
@@ -101,7 +101,7 @@ func runCron(ctx context.Context, p *pipeline.Pipeline, expr string) error {
 
 	entryID, err := c.AddFunc(expr, func() {
 		if err := p.Run(ctx); err != nil {
-			slog.Error("Sync error", "err", err)
+			slog.Error("sync error", "err", err)
 		}
 	})
 	if err != nil {

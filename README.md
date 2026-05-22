@@ -16,7 +16,6 @@ SecretShift is a CLI tool for migrating and syncing secrets and environment vari
 - **6 source/destination types:** GitHub, GitLab, Vault, etcd, Kubernetes, and local file
 - **Flexible processing:** Filter by name regex or type, add prefixes/suffixes to secret names
 - **Multiple run modes:** One-shot, periodic interval, or cron-scheduled
-- **Interactive TUI:** Terminal wizard for guided setup
 - **Encrypted file output:** Optional AES-256-GCM encryption for file destinations
 - **Conflict handling:** Replace, skip, or report existing secrets at the destination
 
@@ -43,23 +42,9 @@ go build -o secret-shift .
 
 ### From Release
 
-Download the source zip from the [releases page](https://github.com/PapaDanielVi/secret-shift/releases), extract, and build:
-
-```bash
-unzip secret-shift-v*-source.zip
-cd secret-shift-*/
-go build -o secret-shift .
-```
+Download the binary for your platform from the [releases page](https://github.com/PapaDanielVi/secret-shift/releases).
 
 ## Quick Start
-
-### Interactive TUI
-
-Launch the terminal wizard to configure and run a sync:
-
-```bash
-secret-shift tui
-```
 
 ### Config File
 
@@ -120,10 +105,6 @@ Execute a sync pipeline.
 
 Print the current version.
 
-### `secret-shift tui`
-
-Interactive terminal wizard that walks through source, processing, and destination configuration, then runs the sync.
-
 ## Sources
 
 | Source         | What it reads                                           |
@@ -144,6 +125,38 @@ Interactive terminal wizard that walks through source, processing, and destinati
 | **vault**      | HashiCorp Vault KV v2                          | Single KV entry                 |
 | **etcd**       | etcd key-value store                           | One key per secret              |
 | **kubernetes** | K8s Secrets + ConfigMaps                       | Routes by secret type           |
+
+## Enterprise and Self-Hosted Providers
+
+### GitHub Enterprise
+
+Set the `url` field to your GitHub Enterprise API endpoint:
+
+```json
+{
+  "source": {
+    "type": "github",
+    "repo": "owner/repo",
+    "url": "https://git.mycompany.com/api/v3",
+    "token": "ghp_xxx"
+  }
+}
+```
+
+### GitLab Self-Hosted
+
+Set the `url` field to your GitLab instance:
+
+```json
+{
+  "source": {
+    "type": "gitlab",
+    "project_id": "123",
+    "url": "https://gitlab.mycompany.com",
+    "token": "glpat-xxx"
+  }
+}
+```
 
 ## Processing
 
@@ -167,7 +180,7 @@ For destinations that support it (GitHub, GitLab):
 
 ```
 secret-shift/
-  cmd/                    # CLI commands (root, sync, tui, version)
+  cmd/                    # CLI commands (root, sync, version)
   internal/
     config/               # Config loading and validation
     pipeline/             # Sync pipeline (source → process → destination)
@@ -177,15 +190,13 @@ secret-shift/
       vault/              # HashiCorp Vault source + destination
       etcd/               # etcd source + destination
       kubernetes/         # Kubernetes source + destination
-    source/               # Source interface (alias to provider.Secret)
-    destination/          # Destination interface + file destination
-    tui/                  # Bubble Tea interactive TUI
+    destination/
+      file/               # File destination
 ```
 
 ## Dependencies
 
 - **CLI:** [Cobra](https://github.com/spf13/cobra) + [Viper](https://github.com/spf13/viper)
-- **TUI:** [Bubble Tea v2](https://github.com/charmbracelet/bubbletea) + [Bubbles v2](https://github.com/charmbracelet/bubbles)
 - **APIs:** go-github, GitLab client, Vault API, etcd client, Kubernetes client-go
 - **Scheduling:** [cron](https://github.com/robfig/cron)
 

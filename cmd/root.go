@@ -44,7 +44,7 @@ func initConfig() {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if cfgFile != "" {
-			fmt.Fprintf(os.Stderr, "Error reading config file: %v\n", err)
+			fmt.Fprintf(os.Stderr, "error reading config file: %v\n", err)
 			os.Exit(1)
 		}
 	}

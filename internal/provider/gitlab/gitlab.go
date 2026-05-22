@@ -18,7 +18,8 @@ type Provider struct {
 	strategy  string
 }
 
-func New(token, projectID, url, strategy string) (*Provider, error) {
+// New creates a GitLab provider for the given project.
+func New(_ context.Context, token, projectID, url, strategy string) (*Provider, error) {
 	var client *gogitlab.Client
 	var err error
 
@@ -37,8 +38,9 @@ func New(token, projectID, url, strategy string) (*Provider, error) {
 		strategy:  strategy,
 	}, nil
 }
+
 // Read fetches all project variables from GitLab.
-func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) { //nolint:revive // doc comment present but revive false positive
+func (p *Provider) Read(_ context.Context) ([]provider.Secret, error) {
 	var result []provider.Secret
 
 	opts := &gogitlab.ListProjectVariablesOptions{
@@ -102,8 +104,9 @@ func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
 }
 
 // listExisting fetches all existing project variable names.
-func (p *Provider) listExisting(ctx context.Context) (map[string]bool, error) {
-	_ = ctx
+func (p *Provider) listExisting(_ context.Context) (map[string]bool, error) {
+	// The GitLab client manages its own request context; ctx is retained in the
+	// signature for interface consistency and future use.
 	existing := make(map[string]bool)
 	opts := &gogitlab.ListProjectVariablesOptions{
 		ListOptions: gogitlab.ListOptions{PerPage: maxPerPage},

@@ -43,7 +43,8 @@ func setupMockServer(secretNames []string, variables []*github.ActionsVariable) 
 	}))
 }
 
-func newTestProvider(serverURL string) *Provider {
+func newTestProvider(t *testing.T, serverURL string) *Provider {
+	t.Helper()
 	p := &Provider{
 		client: github.NewClient(nil),
 		owner:  "owner",
@@ -62,7 +63,7 @@ func TestRead_SecretsAndVariables(t *testing.T) {
 	server := setupMockServer([]string{"API_KEY", "DB_PASSWORD"}, vars)
 	defer server.Close()
 
-	p := newTestProvider(server.URL)
+	p := newTestProvider(t, server.URL)
 
 	secrets, err := p.Read(context.Background())
 	if err != nil {
@@ -95,7 +96,7 @@ func TestRead_Empty(t *testing.T) {
 	server := setupMockServer(nil, nil)
 	defer server.Close()
 
-	p := newTestProvider(server.URL)
+	p := newTestProvider(t, server.URL)
 
 	secrets, err := p.Read(context.Background())
 	if err != nil {
@@ -113,7 +114,7 @@ func TestRead_VariableValues(t *testing.T) {
 	server := setupMockServer(nil, vars)
 	defer server.Close()
 
-	p := newTestProvider(server.URL)
+	p := newTestProvider(t, server.URL)
 
 	secrets, err := p.Read(context.Background())
 	if err != nil {

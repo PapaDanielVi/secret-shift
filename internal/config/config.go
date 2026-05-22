@@ -5,133 +5,96 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 	"github.com/spf13/viper"
 )
 
 const (
-	typeGithub      = "github"
-	typeGitlab      = "gitlab"
-	typeVault       = "vault"
-	typeEtcd        = "etcd"
-	typeKubernetes  = "kubernetes"
-	typeFile        = "file"
-
 	strategyReplace = "replace"
 	strategySkip    = "skip"
 	strategyReport  = "report"
 )
 
+type VaultConfig struct {
+	VaultAddress string `json:"vault_address"`
+	VaultPath    string `json:"vault_path"`
+	VaultMount   string `json:"vault_mount"`
+}
+
+type EtcdConfig struct {
+	EtcdEndpoints []string `json:"etcd_endpoints"`
+	EtcdPrefix    string   `json:"etcd_prefix"`
+	EtcdUsername  string   `json:"etcd_username"`
+	EtcdPassword  string   `json:"etcd_password"`
+}
+
+type KubernetesConfig struct {
+	KubeNamespace  string `json:"kube_namespace"`
+	KubeSecretName string `json:"kube_secret_name"`
+	KubeConfig     string `json:"kube_config"`
+	KubeLabel      string `json:"kube_label"`
+}
+
+type GitConfig struct {
+	Repo     string `json:"repo"`
+	TokenEnv string `json:"token_env"`
+	Token    string `json:"token"`
+	URL      string `json:"url"`
+}
+
 type Config struct {
-	Source      SourceConfig      `mapstructure:"source"`
-	Process     ProcessConfig     `mapstructure:"process"`
-	Destination DestinationConfig `mapstructure:"destination"`
+	Source      SourceConfig      `json:"source"`
+	Process     ProcessConfig     `json:"process"`
+	Destination DestinationConfig `json:"destination"`
 }
 
 type SourceConfig struct {
-	Type      string `mapstructure:"type"`
-	Repo      string `mapstructure:"repo"`
-	TokenEnv  string `mapstructure:"token_env"`
-	Token     string `mapstructure:"token"`
-	URL       string `mapstructure:"url"`
-	ProjectID string `mapstructure:"project_id"`
+	GitConfig
+	VaultConfig
+	EtcdConfig
+	KubernetesConfig
 
-	// Vault-specific
-	VaultAddress string `mapstructure:"vault_address"`
-	VaultPath    string `mapstructure:"vault_path"`
-	VaultMount   string `mapstructure:"vault_mount"`
-
-	// etcd-specific
-	EtcdEndpoints []string `mapstructure:"etcd_endpoints"`
-	EtcdPrefix   string   `mapstructure:"etcd_prefix"`
-	EtcdUsername string   `mapstructure:"etcd_username"`
-	EtcdPassword string   `mapstructure:"etcd_password"`
-
-	// Kubernetes-specific
-	KubeNamespace  string `mapstructure:"kube_namespace"`
-	KubeSecretName string `mapstructure:"kube_secret_name"`
-	KubeConfig     string `mapstructure:"kube_config"`
-	KubeLabel      string `mapstructure:"kube_label"`
+	Type      provider.Type `json:"type"`
+	ProjectID string        `json:"project_id"`
 }
 
 type ProcessConfig struct {
-	AddPrefix    string   `mapstructure:"add_prefix"`
-	AddSuffix    string   `mapstructure:"add_suffix"`
-	IncludeRegex string   `mapstructure:"include_regex"`
-	ExcludeRegex string   `mapstructure:"exclude_regex"`
-	IncludeTypes []string `mapstructure:"include_types"`
-	ExcludeTypes []string `mapstructure:"exclude_types"`
+	AddPrefix    string   `json:"add_prefix"`
+	AddSuffix    string   `json:"add_suffix"`
+	IncludeRegex string   `json:"include_regex"`
+	ExcludeRegex string   `json:"exclude_regex"`
+	IncludeTypes []string `json:"include_types"`
+	ExcludeTypes []string `json:"exclude_types"`
 }
 
 type DestinationConfig struct {
-	Type             string `mapstructure:"type"`
-	Path             string `mapstructure:"path"`
-	Format           string `mapstructure:"format"`
-	Repo             string `mapstructure:"repo"`
-	TokenEnv         string `mapstructure:"token_env"`
-	Token            string `mapstructure:"token"`
-	URL              string `mapstructure:"url"`
-	ProjectID        string `mapstructure:"project_id"`
-	ConflictStrategy string `mapstructure:"conflict_strategy"`
+	GitConfig
+	VaultConfig
+	EtcdConfig
+	KubernetesConfig
 
-	// File encryption
-	Encrypt    bool   `mapstructure:"encrypt"`
-	EncryptKey string `mapstructure:"encrypt_key"`
-
-	// Vault-specific
-	VaultAddress string `mapstructure:"vault_address"`
-	VaultPath    string `mapstructure:"vault_path"`
-	VaultMount   string `mapstructure:"vault_mount"`
-
-	// etcd-specific
-	EtcdEndpoints []string `mapstructure:"etcd_endpoints"`
-	EtcdPrefix   string   `mapstructure:"etcd_prefix"`
-	EtcdUsername string   `mapstructure:"etcd_username"`
-	EtcdPassword string   `mapstructure:"etcd_password"`
-
-	// Kubernetes-specific
-	KubeNamespace  string `mapstructure:"kube_namespace"`
-	KubeSecretName string `mapstructure:"kube_secret_name"`
-	KubeConfig     string `mapstructure:"kube_config"`
-	KubeLabel      string `mapstructure:"kube_label"`
+	Type             provider.Type `json:"type"`
+	Path             string        `json:"path"`
+	Format           string        `json:"format"`
+	ConflictStrategy string        `json:"conflict_strategy"`
+	Encrypt          bool          `json:"encrypt"`
+	EncryptKey       string        `json:"encrypt_key"`
+	ProjectID        string        `json:"project_id"`
 }
 
-var validSourceTypes = map[string]bool{ //nolint:gochecknoglobals // global config state
-	typeGithub: true, typeGitlab: true, typeVault: true, typeEtcd: true, typeKubernetes: true,
-}
-
-var validDestTypes = map[string]bool{ //nolint:gochecknoglobals // global config state
-	typeFile: true, typeGithub: true, typeGitlab: true, typeVault: true, typeEtcd: true, typeKubernetes: true,
-}
-
-func Load(configFile string) (*Config, error) {
+func Load(v *viper.Viper, configFile string) (*Config, error) {
 	if configFile != "" {
-		viper.SetConfigFile(configFile)
-		if err := viper.ReadInConfig(); err != nil {
+		v.SetConfigFile(configFile)
+		if err := v.ReadInConfig(); err != nil {
 			return nil, fmt.Errorf("read config file: %w", err)
 		}
 	}
 
-	viper.SetEnvPrefix("SECRET_SHIFT")
-	viper.AutomaticEnv()
-
-	for _, key := range []string{
-		"source.type", "source.repo", "source.token", "source.url", "source.project_id",
-		"source.vault_address", "source.vault_path", "source.vault_mount",
-		"source.etcd_endpoints", "source.etcd_prefix", "source.etcd_username", "source.etcd_password",
-		"source.kube_namespace", "source.kube_secret_name", "source.kube_config", "source.kube_label",
-		"destination.type", "destination.path", "destination.format", "destination.repo",
-		"destination.token", "destination.url", "destination.project_id", "destination.conflict_strategy",
-		"destination.encrypt", "destination.encrypt_key",
-		"destination.vault_address", "destination.vault_path", "destination.vault_mount",
-		"destination.etcd_endpoints", "destination.etcd_prefix", "destination.etcd_username", "destination.etcd_password",
-		"destination.kube_namespace", "destination.kube_secret_name", "destination.kube_config", "destination.kube_label",
-		"process.add_prefix", "process.add_suffix", "process.include_regex", "process.exclude_regex",
-	} {
-		_ = viper.BindEnv(key)
-	}
+	v.SetEnvPrefix("SECRET_SHIFT")
+	v.AutomaticEnv()
 
 	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 
@@ -179,74 +142,97 @@ func (c *Config) Validate() error {
 
 func validateSourceFields(s *SourceConfig) error {
 	switch s.Type {
-	case typeGithub:
+	case provider.GitHub:
 		if s.Repo == "" {
 			return errors.New("source.repo is required for github source")
 		}
 		if s.Token == "" {
-			return errors.New("source token is required for github source")
+			return errors.New("source.token is required for github source")
 		}
-	case typeGitlab:
+	case provider.GitLab:
 		if s.ProjectID == "" {
 			return errors.New("source.project_id is required for gitlab source")
 		}
 		if s.Token == "" {
-			return errors.New("source token is required for gitlab source")
+			return errors.New("source.token is required for gitlab source")
 		}
-	case typeVault:
+	case provider.Vault:
 		if s.VaultAddress == "" {
 			return errors.New("source.vault_address is required for vault source")
 		}
 		if s.VaultPath == "" {
 			return errors.New("source.vault_path is required for vault source")
 		}
-	case typeEtcd:
+	case provider.Etcd:
 		if len(s.EtcdEndpoints) == 0 {
 			return errors.New("source.etcd_endpoints is required for etcd source")
 		}
-	case typeKubernetes:
+	case provider.Kubernetes:
 		if s.KubeNamespace == "" {
 			return errors.New("source.kube_namespace is required for kubernetes source")
 		}
+	default:
+		return nil
 	}
 	return nil
 }
 
+//exhaustive:ignore
 func validateDestFields(d *DestinationConfig) error {
 	switch d.Type {
-	case typeFile:
+	case provider.File:
 		if d.Path == "" {
 			return errors.New("destination.path is required for file destination")
 		}
-	case typeGithub:
+	case provider.GitHub:
 		if d.Repo == "" {
 			return errors.New("destination.repo is required for github destination")
 		}
 		if d.Token == "" {
-			return errors.New("destination token is required for github destination")
+			return errors.New("destination.token is required for github destination")
 		}
-	case typeGitlab:
+	case provider.GitLab:
 		if d.ProjectID == "" {
 			return errors.New("destination.project_id is required for gitlab destination")
 		}
 		if d.Token == "" {
-			return errors.New("destination token is required for gitlab destination")
+			return errors.New("destination.token is required for gitlab destination")
 		}
-	case typeVault:
+	case provider.Vault:
 		if d.VaultAddress == "" {
 			return errors.New("destination.vault_address is required for vault destination")
 		}
 		if d.VaultPath == "" {
 			return errors.New("destination.vault_path is required for vault destination")
 		}
-	case typeEtcd:
+	case provider.Etcd:
 		if len(d.EtcdEndpoints) == 0 {
 			return errors.New("destination.etcd_endpoints is required for etcd destination")
 		}
-	case typeKubernetes:
+	case provider.Kubernetes:
 		if d.KubeNamespace == "" {
 			return errors.New("destination.kube_namespace is required for kubernetes destination")
 		}
 	}
 	return nil
+}
+
+//nolint:gochecknoglobals
+var validSourceTypes = map[provider.Type]bool{
+	provider.GitHub:     true,
+	provider.GitLab:     true,
+	provider.Vault:      true,
+	provider.Etcd:       true,
+	provider.Kubernetes: true,
+	provider.File:       true,
+}
+
+//nolint:gochecknoglobals
+var validDestTypes = map[provider.Type]bool{
+	provider.File:       true,
+	provider.GitHub:     true,
+	provider.GitLab:     true,
+	provider.Vault:      true,
+	provider.Etcd:       true,
+	provider.Kubernetes: true,
 }

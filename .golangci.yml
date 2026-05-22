@@ -34,7 +34,7 @@ formatters:
       # with the given prefixes are grouped after 3rd-party packages.
       # Default: []
       local-prefixes:
-        - github.com/PapaDanielVi/poya
+        - github.com/PapaDanielVi/secret-shift
 
     golines:
       # Target maximum line length.
@@ -262,7 +262,6 @@ linters:
         # public libs
         - ^github.com/Shopify/sarama.Config$
         - ^github.com/Shopify/sarama.ProducerMessage$
-        - ^github.com/mitchellh/mapstructure.DecoderConfig$
         - ^github.com/prometheus/client_golang/.+Opts$
         - ^github.com/spf13/cobra.Command$
         - ^github.com/spf13/cobra.CompletionOptions$
@@ -464,32 +463,6 @@ linters:
           - gochecknoinits
           - gochecknoglobals
           - revive
-      - path: 'internal/tui/'
-        linters:
-          - gochecknoglobals
-          - recvcheck
-          - revive
-          - gocritic
-          - mnd
-          - goconst
-          - nonamedreturns
-          - gocognit
-      - path: 'internal/pkg/profile/'
-        linters:
-          - gosec
-          - nestif
-          - revive
-          - gochecknoglobals
-          - gocognit
-      - path: 'internal/pkg/gitvault/'
-        linters:
-          - perfsprint
-      - path: 'internal/pkg/config/'
-        linters:
-          - errorlint
-      - path: 'internal/pkg/gitignore/'
-        linters:
-          - gosec
       - path: '.'
         linters:
           - recvcheck

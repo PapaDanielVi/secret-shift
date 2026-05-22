@@ -1,6 +1,19 @@
+// Package provider defines the interfaces and types for secret providers.
 package provider
 
 import "context"
+
+// Type identifies a secret provider.
+type Type string
+
+const (
+	GitHub     Type = "github"
+	GitLab     Type = "gitlab"
+	Vault      Type = "vault"
+	Etcd       Type = "etcd"
+	Kubernetes Type = "kubernetes"
+	File       Type = "file"
+)
 
 type Secret struct {
 	Name            string

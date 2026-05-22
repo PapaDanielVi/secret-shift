@@ -1,23 +1,44 @@
 package pipeline
 
 import (
+	"fmt"
 	"regexp"
 	"slices"
 
 	"github.com/PapaDanielVi/secret-shift/internal/config"
-	"github.com/PapaDanielVi/secret-shift/internal/source"
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 )
 
 type Processor struct {
-	cfg config.ProcessConfig
+	cfg         config.ProcessConfig
+	excludeRe   *regexp.Regexp
+	includeRe   *regexp.Regexp
 }
 
-func NewProcessor(cfg config.ProcessConfig) *Processor {
-	return &Processor{cfg: cfg}
+func NewProcessor(cfg config.ProcessConfig) (*Processor, error) {
+	p := &Processor{cfg: cfg}
+
+	if cfg.ExcludeRegex != "" {
+		re, err := regexp.Compile(cfg.ExcludeRegex)
+		if err != nil {
+			return nil, fmt.Errorf("compile exclude regex: %w", err)
+		}
+		p.excludeRe = re
+	}
+
+	if cfg.IncludeRegex != "" {
+		re, err := regexp.Compile(cfg.IncludeRegex)
+		if err != nil {
+			return nil, fmt.Errorf("compile include regex: %w", err)
+		}
+		p.includeRe = re
+	}
+
+	return p, nil
 }
 
-func (p *Processor) Process(secrets []source.Secret) []source.Secret {
-	var result []source.Secret
+func (p *Processor) Process(secrets []provider.Secret) []provider.Secret {
+	var result []provider.Secret
 
 	for _, s := range secrets {
 		if p.excludeType(s.Type) {
@@ -38,7 +59,7 @@ func (p *Processor) Process(secrets []source.Secret) []source.Secret {
 
 		name = p.cfg.AddPrefix + name + p.cfg.AddSuffix
 
-		result = append(result, source.Secret{
+		result = append(result, provider.Secret{
 			Name:  name,
 			Value: s.Value,
 			Type:  s.Type,
@@ -60,23 +81,15 @@ func (p *Processor) includeType(t string) bool {
 }
 
 func (p *Processor) matchExclude(name string) bool {
-	if p.cfg.ExcludeRegex == "" {
+	if p.excludeRe == nil {
 		return false
 	}
-	re, err := regexp.Compile(p.cfg.ExcludeRegex)
-	if err != nil {
-		return false
-	}
-	return re.MatchString(name)
+	return p.excludeRe.MatchString(name)
 }
 
 func (p *Processor) matchInclude(name string) bool {
-	if p.cfg.IncludeRegex == "" {
+	if p.includeRe == nil {
 		return true
 	}
-	re, err := regexp.Compile(p.cfg.IncludeRegex)
-	if err != nil {
-		return true
-	}
-	return re.MatchString(name)
+	return p.includeRe.MatchString(name)
 }

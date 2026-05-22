@@ -6,19 +6,18 @@ import (
 	"log/slog"
 
 	"github.com/PapaDanielVi/secret-shift/internal/config"
-	"github.com/PapaDanielVi/secret-shift/internal/destination"
 	dstfile "github.com/PapaDanielVi/secret-shift/internal/destination/file"
+	"github.com/PapaDanielVi/secret-shift/internal/provider"
 	provideretcd "github.com/PapaDanielVi/secret-shift/internal/provider/etcd"
 	providergithub "github.com/PapaDanielVi/secret-shift/internal/provider/github"
 	providergitlab "github.com/PapaDanielVi/secret-shift/internal/provider/gitlab"
 	providerk8s "github.com/PapaDanielVi/secret-shift/internal/provider/kubernetes"
 	providervault "github.com/PapaDanielVi/secret-shift/internal/provider/vault"
-	"github.com/PapaDanielVi/secret-shift/internal/source"
 )
 
 type Pipeline struct {
-	src  source.Source
-	dst  destination.Destination
+	src  provider.Source
+	dst  provider.Destination
 	proc *Processor
 }
 
@@ -42,35 +41,40 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	return nil
 }
 
-func Build(cfg *config.Config) (*Pipeline, error) {
+func Build(ctx context.Context, cfg *config.Config) (*Pipeline, error) {
 	p := &Pipeline{}
 
-	if err := p.initSource(cfg); err != nil {
+	if err := p.initSource(ctx, cfg); err != nil {
 		return nil, err
 	}
-	if err := p.initDestination(cfg); err != nil {
+	if err := p.initDestination(ctx, cfg); err != nil {
 		return nil, err
 	}
 
-	p.proc = NewProcessor(cfg.Process)
+	proc, err := NewProcessor(cfg.Process)
+	if err != nil {
+		return nil, fmt.Errorf("create processor: %w", err)
+	}
+	p.proc = proc
 	return p, nil
 }
 
-func (p *Pipeline) initSource(cfg *config.Config) error {
+func (p *Pipeline) initSource(ctx context.Context, cfg *config.Config) error {
 	var err error
-	switch cfg.Source.Type {
-	case "github":
-		p.src, err = providergithub.New(cfg.Source.Token, cfg.Source.Repo, cfg.Source.URL, "replace")
-	case "gitlab":
-		p.src, err = providergitlab.New(cfg.Source.Token, cfg.Source.ProjectID, cfg.Source.URL, "replace")
-	case "vault":
-		p.src, err = providervault.New(cfg.Source.Token, cfg.Source.VaultAddress, cfg.Source.VaultPath, cfg.Source.VaultMount)
-	case "etcd":
-		p.src, err = provideretcd.New(cfg.Source.EtcdEndpoints, cfg.Source.EtcdPrefix, cfg.Source.EtcdUsername, cfg.Source.EtcdPassword)
-	case "kubernetes":
-		p.src, err = providerk8s.New(cfg.Source.KubeConfig, cfg.Source.KubeNamespace, cfg.Source.KubeSecretName, cfg.Source.KubeLabel)
+	src := cfg.Source
+	switch src.Type {
+	case provider.GitHub:
+		p.src, err = providergithub.New(ctx, src.Token, src.Repo, src.URL, "replace")
+	case provider.GitLab:
+		p.src, err = providergitlab.New(ctx, src.Token, src.ProjectID, src.URL, "replace")
+	case provider.Vault:
+		p.src, err = providervault.New(src.Token, src.VaultAddress, src.VaultPath, src.VaultMount)
+	case provider.Etcd:
+		p.src, err = provideretcd.New(src.EtcdEndpoints, src.EtcdPrefix, src.EtcdUsername, src.EtcdPassword)
+	case provider.Kubernetes:
+		p.src, err = providerk8s.New(src.KubeConfig, src.KubeNamespace, src.KubeSecretName, src.KubeLabel)
 	default:
-		return fmt.Errorf("unsupported source type: %s", cfg.Source.Type)
+		return fmt.Errorf("unsupported source type: %s", src.Type)
 	}
 	if err != nil {
 		return fmt.Errorf("create source: %w", err)
@@ -78,37 +82,27 @@ func (p *Pipeline) initSource(cfg *config.Config) error {
 	return nil
 }
 
-func (p *Pipeline) initDestination(cfg *config.Config) error {
+func (p *Pipeline) initDestination(ctx context.Context, cfg *config.Config) error {
 	var err error
-	switch cfg.Destination.Type {
-	case "file":
-		p.dst = dstfile.New(cfg.Destination.Path, cfg.Destination.Format, cfg.Destination.Encrypt, cfg.Destination.EncryptKey)
-	case "github":
-		p.dst, err = providergithub.New(cfg.Destination.Token, cfg.Destination.Repo, cfg.Destination.URL, cfg.Destination.ConflictStrategy)
-	case "gitlab":
-		p.dst, err = providergitlab.New(cfg.Destination.Token, cfg.Destination.ProjectID, cfg.Destination.URL, cfg.Destination.ConflictStrategy)
-	case "vault":
-		p.dst, err = providervault.New(cfg.Destination.Token, cfg.Destination.VaultAddress, cfg.Destination.VaultPath, cfg.Destination.VaultMount)
-	case "etcd":
-		p.dst, err = provideretcd.New(cfg.Destination.EtcdEndpoints, cfg.Destination.EtcdPrefix, cfg.Destination.EtcdUsername, cfg.Destination.EtcdPassword)
-	case "kubernetes":
-		p.dst, err = providerk8s.New(cfg.Destination.KubeConfig, cfg.Destination.KubeNamespace, cfg.Destination.KubeSecretName, cfg.Destination.KubeLabel)
+	dst := cfg.Destination
+	switch dst.Type {
+	case provider.File:
+		p.dst = dstfile.New(dst.Path, dst.Format, dst.Encrypt, dst.EncryptKey)
+	case provider.GitHub:
+		p.dst, err = providergithub.New(ctx, dst.Token, dst.Repo, dst.URL, dst.ConflictStrategy)
+	case provider.GitLab:
+		p.dst, err = providergitlab.New(ctx, dst.Token, dst.ProjectID, dst.URL, dst.ConflictStrategy)
+	case provider.Vault:
+		p.dst, err = providervault.New(dst.Token, dst.VaultAddress, dst.VaultPath, dst.VaultMount)
+	case provider.Etcd:
+		p.dst, err = provideretcd.New(dst.EtcdEndpoints, dst.EtcdPrefix, dst.EtcdUsername, dst.EtcdPassword)
+	case provider.Kubernetes:
+		p.dst, err = providerk8s.New(dst.KubeConfig, dst.KubeNamespace, dst.KubeSecretName, dst.KubeLabel)
 	default:
-		return fmt.Errorf("unsupported destination type: %s", cfg.Destination.Type)
+		return fmt.Errorf("unsupported destination type: %s", dst.Type)
 	}
 	if err != nil {
 		return fmt.Errorf("create destination: %w", err)
 	}
 	return nil
 }
-
-var _ source.Source = (*providergithub.Provider)(nil)
-var _ destination.Destination = (*providergithub.Provider)(nil)
-var _ source.Source = (*providergitlab.Provider)(nil)
-var _ destination.Destination = (*providergitlab.Provider)(nil)
-var _ source.Source = (*providervault.Provider)(nil)
-var _ destination.Destination = (*providervault.Provider)(nil)
-var _ source.Source = (*provideretcd.Provider)(nil)
-var _ destination.Destination = (*provideretcd.Provider)(nil)
-var _ source.Source = (*providerk8s.Provider)(nil)
-var _ destination.Destination = (*providerk8s.Provider)(nil)

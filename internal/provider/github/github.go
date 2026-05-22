@@ -23,13 +23,12 @@ type Provider struct {
 	strategy string
 }
 
-func New(token, repoURL, url, strategy string) (*Provider, error) {
+func New(ctx context.Context, token, repoURL, url, strategy string) (*Provider, error) {
 	owner, name, err := parseRepo(repoURL)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
 

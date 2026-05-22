@@ -53,3 +53,19 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## 5. Provider Patterns
+
+**Context threading convention:**
+
+All provider constructors that perform network initialization accept `context.Context` as their first parameter:
+
+```go
+func New(ctx context.Context, ...) (*Provider, error)
+```
+
+This applies to:
+- `provider/github.New()` — passes context to oauth2 HTTP client
+- `provider/gitlab.New()` — retained for interface consistency
+
+Providers that don't need network initialization during construction (vault, etcd, kubernetes, file) do not take a context in `New()`. Context is passed at the method level (`Read(ctx)`, `Write(ctx)`) for all providers.
