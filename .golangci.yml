@@ -22,7 +22,6 @@ issues:
     - docs
     - examples/
     - "*_test.go"
-  exclude-use-default: false
 
 formatters:
   enable: []
