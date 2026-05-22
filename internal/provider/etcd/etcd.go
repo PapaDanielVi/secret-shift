@@ -1,3 +1,4 @@
+// Package etcd implements a provider for etcd key-value store.
 package etcd
 
 import (

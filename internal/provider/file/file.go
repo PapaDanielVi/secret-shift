@@ -1,3 +1,4 @@
+// Package file implements a provider that reads and writes secrets from/to a local file.
 package file
 
 import (

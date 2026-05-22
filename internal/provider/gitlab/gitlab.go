@@ -1,3 +1,4 @@
+// Package gitlab implements a provider for GitLab project variables.
 package gitlab
 
 import (

@@ -1,3 +1,4 @@
+// Package kubernetes implements a provider that reads/writes secrets from/to Kubernetes Secrets and ConfigMaps.
 package kubernetes
 
 import (

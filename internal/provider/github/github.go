@@ -1,3 +1,4 @@
+// Package github implements a provider for GitHub repository secrets and variables.
 package github
 
 import (

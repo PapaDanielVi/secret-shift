@@ -1,3 +1,4 @@
+// Package vault implements the provider interface for HashiCorp Vault.
 package vault
 
 import (
@@ -112,7 +113,7 @@ func stringifyVaultValue(v any) (string, error) {
 }
 
 func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {
-	data := make(map[string]interface{}) //nolint:modernize
+	data := make(map[string]any)
 	for _, s := range secrets {
 		data[s.Name] = s.Value
 	}
