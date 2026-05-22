@@ -15,12 +15,14 @@ const (
 	strategyReport  = "report"
 )
 
+// VaultConfig holds Vault-specific configuration.
 type VaultConfig struct {
 	VaultAddress string `json:"vault_address"`
 	VaultPath    string `json:"vault_path"`
 	VaultMount   string `json:"vault_mount"`
 }
 
+// EtcdConfig holds etcd-specific configuration.
 type EtcdConfig struct {
 	EtcdEndpoints []string `json:"etcd_endpoints"`
 	EtcdPrefix    string   `json:"etcd_prefix"`
@@ -28,6 +30,7 @@ type EtcdConfig struct {
 	EtcdPassword  string   `json:"etcd_password"`
 }
 
+// KubernetesConfig holds Kubernetes-specific configuration.
 type KubernetesConfig struct {
 	KubeNamespace  string `json:"kube_namespace"`
 	KubeSecretName string `json:"kube_secret_name"`
@@ -35,6 +38,7 @@ type KubernetesConfig struct {
 	KubeLabel      string `json:"kube_label"`
 }
 
+// GitConfig holds GitHub/GitLab-specific configuration.
 type GitConfig struct {
 	Repo     string `json:"repo"`
 	TokenEnv string `json:"token_env"`
@@ -42,22 +46,35 @@ type GitConfig struct {
 	URL      string `json:"url"`
 }
 
+// FileConfig holds file-specific configuration.
+type FileConfig struct {
+	Path       string `json:"path"`
+	Format     string `json:"format"`
+	Encrypt    bool   `json:"encrypt"`
+	EncryptKey string `json:"encrypt_key"`
+}
+
+// Config is the top-level configuration.
 type Config struct {
 	Source      SourceConfig      `json:"source"`
 	Process     ProcessConfig     `json:"process"`
 	Destination DestinationConfig `json:"destination"`
+	DryRun      bool              `json:"dry_run"`
 }
 
+// SourceConfig holds the source provider configuration.
 type SourceConfig struct {
+	Type      provider.Type `json:"type"`
+	ProjectID string        `json:"project_id"`
+
 	GitConfig
 	VaultConfig
 	EtcdConfig
 	KubernetesConfig
-
-	Type      provider.Type `json:"type"`
-	ProjectID string        `json:"project_id"`
+	FileConfig
 }
 
+// ProcessConfig holds the processing/filtering configuration.
 type ProcessConfig struct {
 	AddPrefix    string   `json:"add_prefix"`
 	AddSuffix    string   `json:"add_suffix"`
@@ -67,21 +84,25 @@ type ProcessConfig struct {
 	ExcludeTypes []string `json:"exclude_types"`
 }
 
+// DestinationConfig holds the destination provider configuration.
 type DestinationConfig struct {
+	Type             provider.Type `json:"type"`
+	ConflictStrategy string        `json:"conflict_strategy"`
+	ProjectID        string        `json:"project_id"`
+
 	GitConfig
 	VaultConfig
 	EtcdConfig
 	KubernetesConfig
-
-	Type             provider.Type `json:"type"`
-	Path             string        `json:"path"`
-	Format           string        `json:"format"`
-	ConflictStrategy string        `json:"conflict_strategy"`
-	Encrypt          bool          `json:"encrypt"`
-	EncryptKey       string        `json:"encrypt_key"`
-	ProjectID        string        `json:"project_id"`
+	FileConfig
 }
 
+// Load reads configuration from file and environment.
+// Environment variables use the prefix SECRET_SHIFT_SRC_ for source fields
+// and SECRET_SHIFT_DST_ for destination fields, e.g.:
+//
+//	SECRET_SHIFT_SRC_GITHUB_TOKEN=xxx
+//	SECRET_SHIFT_DST_GITHUB_TOKEN=yyy
 func Load(v *viper.Viper, configFile string) (*Config, error) {
 	if configFile != "" {
 		v.SetConfigFile(configFile)
@@ -98,16 +119,65 @@ func Load(v *viper.Viper, configFile string) (*Config, error) {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 
-	if cfg.Source.Token == "" && cfg.Source.TokenEnv != "" {
-		cfg.Source.Token = os.Getenv(cfg.Source.TokenEnv)
-	}
-	if cfg.Destination.Token == "" && cfg.Destination.TokenEnv != "" {
-		cfg.Destination.Token = os.Getenv(cfg.Destination.TokenEnv)
-	}
+	// Resolve tokens from env vars using the token_env field or
+	// the per-step env var convention: SECRET_SHIFT_SRC_<PROVIDER>_TOKEN
+	// and SECRET_SHIFT_DST_<PROVIDER>_TOKEN.
+	resolveSourceToken(&cfg.Source)
+	resolveDestToken(&cfg.Destination)
 
 	return &cfg, nil
 }
 
+func resolveSourceToken(s *SourceConfig) {
+	if s.Token != "" {
+		return
+	}
+	// Check token_env field first
+	if s.TokenEnv != "" {
+		s.Token = os.Getenv(s.TokenEnv)
+		if s.Token != "" {
+			return
+		}
+	}
+	// Check per-step env var: SECRET_SHIFT_SRC_<TYPE>_TOKEN
+	envKey := fmt.Sprintf("SECRET_SHIFT_SRC_%s_TOKEN", providerEnvSuffix(s.Type))
+	s.Token = os.Getenv(envKey)
+}
+
+func resolveDestToken(d *DestinationConfig) {
+	if d.Token != "" {
+		return
+	}
+	if d.TokenEnv != "" {
+		d.Token = os.Getenv(d.TokenEnv)
+		if d.Token != "" {
+			return
+		}
+	}
+	envKey := fmt.Sprintf("SECRET_SHIFT_DST_%s_TOKEN", providerEnvSuffix(d.Type))
+	d.Token = os.Getenv(envKey)
+}
+
+func providerEnvSuffix(t provider.Type) string {
+	switch t {
+	case provider.GitHub:
+		return "GITHUB"
+	case provider.GitLab:
+		return "GITLAB"
+	case provider.Vault:
+		return "VAULT"
+	case provider.Etcd:
+		return "ETCD"
+	case provider.Kubernetes:
+		return "KUBERNETES"
+	case provider.File:
+		return "FILE"
+	default:
+		return string(t)
+	}
+}
+
+// Validate checks the configuration for correctness.
 func (c *Config) Validate() error {
 	if c.Source.Type == "" {
 		return errors.New("source.type is required")
@@ -147,14 +217,14 @@ func validateSourceFields(s *SourceConfig) error {
 			return errors.New("source.repo is required for github source")
 		}
 		if s.Token == "" {
-			return errors.New("source.token is required for github source")
+			return errors.New("source.token is required for github source (set token, token_env, or SECRET_SHIFT_SRC_GITHUB_TOKEN)")
 		}
 	case provider.GitLab:
 		if s.ProjectID == "" {
 			return errors.New("source.project_id is required for gitlab source")
 		}
 		if s.Token == "" {
-			return errors.New("source.token is required for gitlab source")
+			return errors.New("source.token is required for gitlab source (set token, token_env, or SECRET_SHIFT_SRC_GITLAB_TOKEN)")
 		}
 	case provider.Vault:
 		if s.VaultAddress == "" {
@@ -171,13 +241,14 @@ func validateSourceFields(s *SourceConfig) error {
 		if s.KubeNamespace == "" {
 			return errors.New("source.kube_namespace is required for kubernetes source")
 		}
-	default:
-		return nil
+	case provider.File:
+		if s.Path == "" {
+			return errors.New("source.path is required for file source")
+		}
 	}
 	return nil
 }
 
-//exhaustive:ignore
 func validateDestFields(d *DestinationConfig) error {
 	switch d.Type {
 	case provider.File:
@@ -189,14 +260,14 @@ func validateDestFields(d *DestinationConfig) error {
 			return errors.New("destination.repo is required for github destination")
 		}
 		if d.Token == "" {
-			return errors.New("destination.token is required for github destination")
+			return errors.New("destination.token is required for github destination (set token, token_env, or SECRET_SHIFT_DST_GITHUB_TOKEN)")
 		}
 	case provider.GitLab:
 		if d.ProjectID == "" {
 			return errors.New("destination.project_id is required for gitlab destination")
 		}
 		if d.Token == "" {
-			return errors.New("destination.token is required for gitlab destination")
+			return errors.New("destination.token is required for gitlab destination (set token, token_env, or SECRET_SHIFT_DST_GITLAB_TOKEN)")
 		}
 	case provider.Vault:
 		if d.VaultAddress == "" {

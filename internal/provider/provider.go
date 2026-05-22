@@ -18,7 +18,7 @@ const (
 type Secret struct {
 	Name            string
 	Value           string
-	Type            string // "env" or "secret" or file
+	Type            string // "env" or "secret" or "file"
 	OtherAttributes map[string]string
 }
 

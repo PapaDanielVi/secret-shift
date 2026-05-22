@@ -20,8 +20,8 @@ func TestValidate_MissingSourceType(t *testing.T) {
 	cfg := newTestConfig(t, &Config{
 		Source: SourceConfig{GitConfig: GitConfig{Token: "tok"}},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -37,8 +37,8 @@ func TestValidate_InvalidSourceType(t *testing.T) {
 			GitConfig: GitConfig{Token: "tok", Repo: "o/r"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -54,8 +54,8 @@ func TestValidate_MissingRepo(t *testing.T) {
 			GitConfig: GitConfig{Token: "tok"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -71,8 +71,8 @@ func TestValidate_MissingToken(t *testing.T) {
 			GitConfig: GitConfig{Repo: "o/r"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -121,7 +121,7 @@ func TestValidate_InvalidStrategy(t *testing.T) {
 		},
 		Destination: DestinationConfig{
 			Type:             provider.File,
-			Path:             "/tmp/out.json",
+			FileConfig:       FileConfig{Path: "/tmp/out.json"},
 			ConflictStrategy: "invalid",
 		},
 	})
@@ -138,8 +138,8 @@ func TestValidate_DefaultStrategy(t *testing.T) {
 			GitConfig: GitConfig{Token: "tok", Repo: "o/r"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -158,9 +158,8 @@ func TestValidate_ValidGithubToFile(t *testing.T) {
 			GitConfig: GitConfig{Repo: "owner/repo", Token: "ghp_xxx"},
 		},
 		Destination: DestinationConfig{
-			Type:   provider.File,
-			Path:   "/tmp/out.json",
-			Format: "json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json", Format: "json"},
 		},
 	})
 	err := cfg.Validate()
@@ -177,9 +176,8 @@ func TestValidate_ValidGitlabToFile(t *testing.T) {
 			GitConfig: GitConfig{Token: "glpat-xxx"},
 		},
 		Destination: DestinationConfig{
-			Type:   provider.File,
-			Path:   "/tmp/out.yaml",
-			Format: "yaml",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.yaml", Format: "yaml"},
 		},
 	})
 	err := cfg.Validate()
@@ -196,8 +194,8 @@ func TestValidate_ValidVaultSource(t *testing.T) {
 			GitConfig:   GitConfig{Token: "hvs.xxx"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -214,8 +212,8 @@ func TestValidate_VaultSourceMissingAddress(t *testing.T) {
 			GitConfig:   GitConfig{Token: "hvs.xxx"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -232,8 +230,8 @@ func TestValidate_VaultSourceMissingPath(t *testing.T) {
 			GitConfig:   GitConfig{Token: "hvs.xxx"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -249,8 +247,8 @@ func TestValidate_ValidEtcdSource(t *testing.T) {
 			EtcdConfig: EtcdConfig{EtcdEndpoints: []string{"http://localhost:2379"}},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -265,8 +263,8 @@ func TestValidate_EtcdSourceMissingEndpoints(t *testing.T) {
 			Type: provider.Etcd,
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -282,8 +280,8 @@ func TestValidate_ValidKubernetesSource(t *testing.T) {
 			KubernetesConfig: KubernetesConfig{KubeNamespace: "default"},
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -298,8 +296,8 @@ func TestValidate_KubernetesSourceMissingNamespace(t *testing.T) {
 			Type: provider.Kubernetes,
 		},
 		Destination: DestinationConfig{
-			Type: provider.File,
-			Path: "/tmp/out.json",
+			Type:       provider.File,
+			FileConfig: FileConfig{Path: "/tmp/out.json"},
 		},
 	})
 	err := cfg.Validate()
@@ -375,8 +373,8 @@ func TestValidate_TableDriven(t *testing.T) {
 					GitConfig: GitConfig{Repo: "o/r", Token: "tok"},
 				},
 				Destination: DestinationConfig{
-					Type: provider.File,
-					Path: "/tmp/out.json",
+					Type:       provider.File,
+					FileConfig: FileConfig{Path: "/tmp/out.json"},
 				},
 			},
 			wantErr: false,
@@ -416,8 +414,8 @@ func TestValidate_TableDriven(t *testing.T) {
 			cfg: &Config{
 				Source: SourceConfig{},
 				Destination: DestinationConfig{
-					Type: provider.File,
-					Path: "/tmp/out.json",
+					Type:       provider.File,
+					FileConfig: FileConfig{Path: "/tmp/out.json"},
 				},
 			},
 			wantErr:   true,
@@ -440,8 +438,8 @@ func TestValidate_TableDriven(t *testing.T) {
 			cfg: &Config{
 				Source: SourceConfig{Type: "invalid"},
 				Destination: DestinationConfig{
-					Type: provider.File,
-					Path: "/tmp/out.json",
+					Type:       provider.File,
+					FileConfig: FileConfig{Path: "/tmp/out.json"},
 				},
 			},
 			wantErr:   true,
@@ -467,8 +465,8 @@ func TestValidate_TableDriven(t *testing.T) {
 					GitConfig: GitConfig{Token: "tok"},
 				},
 				Destination: DestinationConfig{
-					Type: provider.File,
-					Path: "/tmp/out.json",
+					Type:       provider.File,
+					FileConfig: FileConfig{Path: "/tmp/out.json"},
 				},
 			},
 			wantErr:   true,
@@ -482,8 +480,8 @@ func TestValidate_TableDriven(t *testing.T) {
 					GitConfig: GitConfig{Repo: "o/r"},
 				},
 				Destination: DestinationConfig{
-					Type: provider.File,
-					Path: "/tmp/out.json",
+					Type:       provider.File,
+					FileConfig: FileConfig{Path: "/tmp/out.json"},
 				},
 			},
 			wantErr:   true,
@@ -512,7 +510,7 @@ func TestValidate_TableDriven(t *testing.T) {
 				},
 				Destination: DestinationConfig{
 					Type:             provider.File,
-					Path:             "/tmp/out.json",
+					FileConfig:       FileConfig{Path: "/tmp/out.json"},
 					ConflictStrategy: "invalid",
 				},
 			},
@@ -527,8 +525,8 @@ func TestValidate_TableDriven(t *testing.T) {
 					GitConfig: GitConfig{Repo: "o/r", Token: "tok"},
 				},
 				Destination: DestinationConfig{
-					Type: provider.File,
-					Path: "/tmp/out.json",
+					Type:       provider.File,
+					FileConfig: FileConfig{Path: "/tmp/out.json"},
 				},
 			},
 			wantErr: false,

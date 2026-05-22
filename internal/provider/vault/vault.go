@@ -10,6 +10,35 @@ import (
 	vaultapi "github.com/hashicorp/vault/api"
 )
 
+func init() {
+	provider.Register(provider.Registration{
+		Name: provider.Vault,
+		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+			token := getString(opts, "token")
+			address := getString(opts, "vault_address")
+			path := getString(opts, "vault_path")
+			mount := getString(opts, "vault_mount")
+			return New(token, address, path, mount)
+		},
+		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+			token := getString(opts, "token")
+			address := getString(opts, "vault_address")
+			path := getString(opts, "vault_path")
+			mount := getString(opts, "vault_mount")
+			return New(token, address, path, mount)
+		},
+	})
+}
+
+func getString(opts map[string]any, key string) string {
+	if v, ok := opts[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
 type Provider struct {
 	client *vaultapi.Client
 	path   string

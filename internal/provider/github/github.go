@@ -10,6 +10,37 @@ import (
 	"golang.org/x/oauth2"
 )
 
+func init() {
+	provider.Register(provider.Registration{
+		Name: provider.GitHub,
+		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+			token := getString(opts, "token")
+			repo := getString(opts, "repo")
+			url := getString(opts, "url")
+			return New(ctx, token, repo, url, "replace")
+		},
+		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+			token := getString(opts, "token")
+			repo := getString(opts, "repo")
+			url := getString(opts, "url")
+			strategy := getString(opts, "strategy")
+			if strategy == "" {
+				strategy = "replace"
+			}
+			return New(ctx, token, repo, url, strategy)
+		},
+	})
+}
+
+func getString(opts map[string]any, key string) string {
+	if v, ok := opts[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
 const (
 	secretTypeSecret = "secret"
 	secretTypeEnv    = "env"

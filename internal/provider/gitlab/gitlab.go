@@ -9,6 +9,37 @@ import (
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
+func init() {
+	provider.Register(provider.Registration{
+		Name: provider.GitLab,
+		SourceFactory: func(ctx context.Context, opts map[string]any) (provider.Source, error) {
+			token := getString(opts, "token")
+			projectID := getString(opts, "project_id")
+			url := getString(opts, "url")
+			return New(ctx, token, projectID, url, "replace")
+		},
+		DestFactory: func(ctx context.Context, opts map[string]any) (provider.Destination, error) {
+			token := getString(opts, "token")
+			projectID := getString(opts, "project_id")
+			url := getString(opts, "url")
+			strategy := getString(opts, "strategy")
+			if strategy == "" {
+				strategy = "replace"
+			}
+			return New(ctx, token, projectID, url, strategy)
+		},
+	})
+}
+
+func getString(opts map[string]any, key string) string {
+	if v, ok := opts[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
 const maxPerPage = 100
 
 // Provider implements source.Source and destination.Destination for GitLab.
