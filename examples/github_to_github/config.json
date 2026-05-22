@@ -1,0 +1,23 @@
+{
+  "source": {
+    "type": "github",
+    "repo": "owner/source-repo",
+    "token": "YOUR_GITHUB_TOKEN",
+    // "url": "https://git.mycompany.com/api/v3" // Optional: for GitHub Enterprise
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "github",
+    "repo": "owner/dest-repo",
+    "token": "YOUR_GITHUB_TOKEN",
+    "conflict_strategy": "replace"
+  },
+  "dry_run": false
+}

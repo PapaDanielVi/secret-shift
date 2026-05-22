@@ -1,0 +1,22 @@
+{
+  "source": {
+    "type": "kubernetes",
+    "kube_namespace": "default",
+    "kube_secret_name": "my-app-config"
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "kubernetes",
+    "conflict_strategy": "replace",
+    "kube_namespace": "production",
+    "kube_secret_name": "my-app-config"
+  },
+  "dry_run": false
+}

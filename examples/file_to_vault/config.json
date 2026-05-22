@@ -1,0 +1,25 @@
+{
+  "source": {
+    "type": "file",
+    "path": "./secrets.json",
+    "format": "json",
+    "encrypt": false
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "vault",
+    "conflict_strategy": "replace",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "secret/data/my-app",
+    "vault_mount": "secret",
+    "token_redacted": "YOUR_VAULT_TOKEN_HERE"
+  },
+  "dry_run": false
+}

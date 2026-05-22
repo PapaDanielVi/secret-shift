@@ -1,0 +1,22 @@
+{
+  "source": {
+    "type": "kubernetes",
+    "kube_namespace": "default",
+    "kube_secret_name": "my-app-config"
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "github",
+    "conflict_strategy": "replace",
+    "repo": "owner/repo",
+    "token_redacted": "YOUR_GITHUB_TOKEN_HERE"
+  },
+  "dry_run": false
+}

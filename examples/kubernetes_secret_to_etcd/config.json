@@ -1,0 +1,24 @@
+{
+  "source": {
+    "type": "kubernetes",
+    "kube_namespace": "default",
+    "kube_secret_name": "my-app-secrets",
+    // "kube_config": "~/.kube/config" // Optional, defaults to ~/.kube/config
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "etcd",
+    "etcd_endpoints": ["http://localhost:2379"],
+    "etcd_prefix": "/myapp/"
+    // "etcd_username": "root",    // Optional: for authenticated etcd
+    // "etcd_password": "password" // Optional: for authenticated etcd
+  },
+  "dry_run": false
+}

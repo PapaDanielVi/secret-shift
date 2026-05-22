@@ -1,0 +1,23 @@
+{
+  "source": {
+    "type": "github",
+    "repo": "owner/repo",
+    "token": "YOUR_GITHUB_TOKEN",
+    // "url": "https://git.mycompany.com/api/v3" // Optional: for GitHub Enterprise
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "kubernetes",
+    "kube_namespace": "default",
+    "kube_secret_name": "my-app-config",
+    // "kube_config": "~/.kube/config" // Optional, defaults to ~/.kube/config
+  },
+  "dry_run": false
+}

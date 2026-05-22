@@ -1,0 +1,25 @@
+{
+  "source": {
+    "type": "vault",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "myapp/config",
+    "token": "YOUR_VAULT_TOKEN"
+    // "vault_mount": "secret" // Optional, defaults to "secret"
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "github",
+    "repo": "owner/repo",
+    "token": "YOUR_GITHUB_TOKEN",
+    "conflict_strategy": "replace"
+    // "url": "https://git.mycompany.com/api/v3" // Optional: for GitHub Enterprise
+  },
+  "dry_run": false
+}

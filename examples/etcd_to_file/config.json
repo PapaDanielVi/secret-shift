@@ -1,0 +1,22 @@
+{
+  "source": {
+    "type": "etcd",
+    "etcd_endpoints": ["http://localhost:2379"],
+    "etcd_prefix": "/my-app/"
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "file",
+    "path": "./output/etcd-secrets.json",
+    "format": "json",
+    "encrypt": false
+  },
+  "dry_run": false
+}

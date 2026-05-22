@@ -1,0 +1,25 @@
+{
+  "source": {
+    "type": "vault",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "myapp/source-config",
+    "token": "YOUR_VAULT_TOKEN"
+    // "vault_mount": "secret" // Optional, defaults to "secret"
+  },
+  "process": {
+    "add_prefix": "",
+    "add_suffix": "",
+    "include_regex": "",
+    "exclude_regex": "",
+    "include_types": [],
+    "exclude_types": []
+  },
+  "destination": {
+    "type": "vault",
+    "vault_address": "https://vault.example.com",
+    "vault_path": "myapp/dest-config",
+    "token": "YOUR_VAULT_TOKEN"
+    // "vault_mount": "secret" // Optional, defaults to "secret"
+  },
+  "dry_run": false
+}

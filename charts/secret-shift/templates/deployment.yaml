@@ -1,3 +1,4 @@
+{{- if or (eq .Values.mode "periodic") (eq .Values.mode "server") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,9 +41,19 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - sync
+            {{- if eq .Values.mode "periodic" }}
+            - --periodically
+            - --frequency={{ .Values.syncFrequency }}
+            {{- end }}
+            {{- if eq .Values.mode "server" }}
+            - --server
+            - --health-port={{ .Values.healthPort }}
+            {{- end }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ .Values.healthPort }}
               protocol: TCP
           {{- with .Values.livenessProbe }}
           livenessProbe:
@@ -56,6 +67,14 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.config.existingConfigMap | default (printf "%s-config" (include "secret-shift.fullname" .)) }}
+            {{- if .Values.secrets }}
+            - secretRef:
+                name: {{ include "secret-shift.fullname" . }}-secrets
+                optional: true
+            {{- end }}
           {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
@@ -76,3 +95,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}

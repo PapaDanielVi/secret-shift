@@ -1,0 +1,13 @@
+{{- if and (not .Values.config.existingConfigMap) .Values.config.data }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "secret-shift.fullname" . }}-config
+  labels:
+    {{- include "secret-shift.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.config.data }}
+  {{ $key }}: |
+    {{- $value | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -17,6 +17,12 @@ issues:
   # Set to 0 to disable.
   # Default: 3
   max-same-issues: 50
+  exclude-dirs:
+    - vendor
+    - docs
+    - examples/
+    - "*_test.go"
+  exclude-use-default: false
 
 formatters:
   enable: []
