@@ -18,7 +18,8 @@ builds:
       - "-s -w -X github.com/PapaDanielVi/secret-shift/cmd.Version={{ .Tag }}"
 
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -41,17 +42,23 @@ nfpms:
       - termux.deb
       - archlinux
 
-brews:
-  - repository:
-      owner: PapaDanielVi
-      name: homebrew-tap
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-
-    directory: Formula
+homebrew_casks:
+  - name: secret-shift
 
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
+
+    url:
+      verified: https://github.com/PapaDanielVi/secret-shift
+
+    hooks:
+      post:
+        # replace foo with the actual binary name
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/secret-shift"]
+          end
 
     homepage: "https://github.com/PapaDanielVi/secret-shift"
     description: "SecretShift is a CLI tool for migrating and syncing secrets and environment variables between providers"
