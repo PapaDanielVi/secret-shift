@@ -48,6 +48,38 @@ go build -o secret-shift .
 
 Download the binary for your platform from the [releases page](https://github.com/PapaDanielVi/secret-shift/releases).
 
+### Installation Scripts
+
+For automated installation and updates, use the provided scripts:
+
+**Linux (Auto-detects package manager):**
+
+```bash
+curl -Lo install-linux.sh https://raw.githubusercontent.com/PapaDanielVi/secret-shift/main/scripts/install-linux.sh
+chmod +x install-linux.sh
+sudo ./install-linux.sh
+```
+
+The script detects and uses:
+- `dnf`/`yum`/`zypper`: RPM packages
+- `apt-get`: DEB packages
+- `apk`: APK packages (Alpine)
+- `pacman`: Arch packages
+- Falls back to tarball if no package manager is found
+
+**Windows (PowerShell):**
+
+```powershell
+curl -Uri https://raw.githubusercontent.com/PapaDanielVi/secret-shift/main/scripts/install-windows.ps1 -OutFile install-windows.ps1
+.\install-windows.ps1
+```
+
+Both scripts:
+- Fetch and install the latest release automatically
+- Remove existing installations before upgrading
+- Install to standard system locations
+- Add the binary to PATH (Windows only)
+
 ## Quick Start
 
 ### Config File
@@ -100,15 +132,15 @@ This per-step convention means you can use different credentials for source and 
 
 Execute a sync pipeline.
 
-| Flag              | Default               | Description                                              |
-| ----------------- | --------------------- | -------------------------------------------------------- |
-| `-c, --config`    | `./secret-shift.json` | Path to config file                                      |
-| `--periodically`  | `false`               | Run in a loop                                            |
-| `--frequency`     | `5m`                  | Interval between syncs (e.g. `1m`, `1h`)                 |
-| `--cron`          |                       | Cron expression (e.g. `*/5 * * * *`)                     |
-| `--dry-run`       | `false`               | Simulate sync without writing to destination             |
-| `--server`        | `false`               | Start HTTP server with health endpoints + periodic sync  |
-| `--health-port`   | `8080`                | Port for health HTTP server                              |
+| Flag             | Default               | Description                                             |
+| ---------------- | --------------------- | ------------------------------------------------------- |
+| `-c, --config`   | `./secret-shift.json` | Path to config file                                     |
+| `--periodically` | `false`               | Run in a loop                                           |
+| `--frequency`    | `5m`                  | Interval between syncs (e.g. `1m`, `1h`)                |
+| `--cron`         |                       | Cron expression (e.g. `*/5 * * * *`)                    |
+| `--dry-run`      | `false`               | Simulate sync without writing to destination            |
+| `--server`       | `false`               | Start HTTP server with health endpoints + periodic sync |
+| `--health-port`  | `8080`                | Port for health HTTP server                             |
 
 ### `secret-shift version`
 
@@ -116,14 +148,14 @@ Print the current version.
 
 ## Sources
 
-| Source         | What it reads                                           |
-| -------------- | ------------------------------------------------------- |
-| **github**     | GitHub Actions secrets + environment variables          |
-| **gitlab**     | GitLab project-level CI/CD variables                    |
-| **vault**      | HashiCorp Vault KV v2 secrets                           |
-| **etcd**       | etcd key-value pairs under a prefix                     |
-| **kubernetes** | K8s Secrets + ConfigMaps (by name, label, or namespace) |
-| **file**       | Local JSON or YAML key-value file (optionally encrypted)|
+| Source         | What it reads                                            |
+| -------------- | -------------------------------------------------------- |
+| **github**     | GitHub Actions secrets + environment variables           |
+| **gitlab**     | GitLab project-level CI/CD variables                     |
+| **vault**      | HashiCorp Vault KV v2 secrets                            |
+| **etcd**       | etcd key-value pairs under a prefix                      |
+| **kubernetes** | K8s Secrets + ConfigMaps (by name, label, or namespace)  |
+| **file**       | Local JSON or YAML key-value file (optionally encrypted) |
 
 ## Destinations
 
@@ -140,11 +172,11 @@ Print the current version.
 
 When running with `--server`, secret-shift starts an HTTP server that exposes:
 
-| Endpoint     | Description                                          |
-| ------------ | ---------------------------------------------------- |
-| `GET /healthz` | Liveness probe — always returns `{"status":"ok"}` |
-| `GET /readyz` | Readiness probe — returns `ready` after first successful sync, `not_ready` if no sync has completed or the last sync failed |
-| `GET /status` | Detailed status including sync count, error count, last sync time |
+| Endpoint       | Description                                                                                                                 |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `GET /healthz` | Liveness probe — always returns `{"status":"ok"}`                                                                           |
+| `GET /readyz`  | Readiness probe — returns `ready` after first successful sync, `not_ready` if no sync has completed or the last sync failed |
+| `GET /status`  | Detailed status including sync count, error count, last sync time                                                           |
 
 In server mode, syncs run periodically in the background (default every 5 minutes).
 
@@ -204,21 +236,21 @@ For destinations that support it (GitHub, GitLab):
 
 The config system supports separate environment variables for source and destination:
 
-| Variable Pattern                    | Example                              |
-| ----------------------------------- | ------------------------------------ |
-| `SECRET_SHIFT_SRC_TYPE`             | Source provider type                 |
-| `SECRET_SHIFT_SRC_GITHUB_TOKEN`     | GitHub token for source              |
-| `SECRET_SHIFT_SRC_GITLAB_TOKEN`     | GitLab token for source              |
-| `SECRET_SHIFT_SRC_VAULT_TOKEN`      | Vault token for source               |
-| `SECRET_SHIFT_SRC_PATH`             | File path for file source            |
-| `SECRET_SHIFT_SRC_KUBE_NAMESPACE`   | K8s namespace for source             |
-| `SECRET_SHIFT_DST_TYPE`             | Destination provider type            |
-| `SECRET_SHIFT_DST_GITHUB_TOKEN`     | GitHub token for destination         |
-| `SECRET_SHIFT_DST_GITLAB_TOKEN`     | GitLab token for destination         |
-| `SECRET_SHIFT_DST_VAULT_TOKEN`      | Vault token for destination          |
-| `SECRET_SHIFT_DST_PATH`             | File path for file destination       |
-| `SECRET_SHIFT_DST_KUBE_NAMESPACE`   | K8s namespace for destination        |
-| `SECRET_SHIFT_DRY_RUN`              | Enable dry-run mode                  |
+| Variable Pattern                  | Example                        |
+| --------------------------------- | ------------------------------ |
+| `SECRET_SHIFT_SRC_TYPE`           | Source provider type           |
+| `SECRET_SHIFT_SRC_GITHUB_TOKEN`   | GitHub token for source        |
+| `SECRET_SHIFT_SRC_GITLAB_TOKEN`   | GitLab token for source        |
+| `SECRET_SHIFT_SRC_VAULT_TOKEN`    | Vault token for source         |
+| `SECRET_SHIFT_SRC_PATH`           | File path for file source      |
+| `SECRET_SHIFT_SRC_KUBE_NAMESPACE` | K8s namespace for source       |
+| `SECRET_SHIFT_DST_TYPE`           | Destination provider type      |
+| `SECRET_SHIFT_DST_GITHUB_TOKEN`   | GitHub token for destination   |
+| `SECRET_SHIFT_DST_GITLAB_TOKEN`   | GitLab token for destination   |
+| `SECRET_SHIFT_DST_VAULT_TOKEN`    | Vault token for destination    |
+| `SECRET_SHIFT_DST_PATH`           | File path for file destination |
+| `SECRET_SHIFT_DST_KUBE_NAMESPACE` | K8s namespace for destination  |
+| `SECRET_SHIFT_DRY_RUN`            | Enable dry-run mode            |
 
 Token resolution order: direct config value → `token_env` field → `SECRET_SHIFT_SRC/DST_<PROVIDER>_TOKEN` env var.
 
@@ -230,11 +262,11 @@ See the [`examples/`](examples/) directory for ready-to-use configurations for e
 
 A Helm chart is available at [`charts/secret-shift/`](charts/secret-shift/). It supports three modes:
 
-| Mode         | Description                          | Kubernetes Resource |
-| ------------ | ------------------------------------ | ------------------- |
-| `server`     | HTTP health endpoints + periodic sync | Deployment          |
-| `periodic`   | Periodic sync loop                   | Deployment          |
-| `one-shot`   | Single sync run on a schedule        | CronJob             |
+| Mode       | Description                           | Kubernetes Resource |
+| ---------- | ------------------------------------- | ------------------- |
+| `server`   | HTTP health endpoints + periodic sync | Deployment          |
+| `periodic` | Periodic sync loop                    | Deployment          |
+| `one-shot` | Single sync run on a schedule         | CronJob             |
 
 ```bash
 helm install secret-shift charts/secret-shift/ --set mode=server
