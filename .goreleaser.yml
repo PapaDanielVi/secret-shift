@@ -1,4 +1,4 @@
-version: 1
+version: 2
 
 before:
   hooks:
@@ -27,7 +27,21 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
-brews:
+
+nfpms:
+  - id: secret-shift
+    package_name: secret-shift
+    maintainer: "PapaDanielVi <k2527806@gmail.com>"
+    description: "SecretShift is a CLI tool for migrating and syncing secrets and environment variables between providers"
+    license: "MIT"
+    formats:
+      - apk
+      - deb
+      - rpm
+      - termux.deb
+      - archlinux
+
+homebrew_casks:
   - repository:
       owner: PapaDanielVi
       name: homebrew-tap
@@ -42,6 +56,3 @@ brews:
     homepage: "https://github.com/PapaDanielVi/secret-shift"
     description: "SecretShift is a CLI tool for migrating and syncing secrets and environment variables between providers"
     license: "MIT"
-
-    test: |
-      system "#{bin}/secret-shift --version"
