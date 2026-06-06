@@ -11,6 +11,8 @@
 
 SecretShift is a CLI tool for migrating and syncing secrets and environment variables between providers. Move secrets from GitHub, GitLab, HashiCorp Vault, etcd, Kubernetes, or local files to any of those destinations.
 
+See [CONTEXT.md](./CONTEXT.md) for domain terminology and conventions.
+
 ## Features
 
 - **7 provider types:** GitHub, GitLab, Vault, etcd, Kubernetes, local file (source + destination)

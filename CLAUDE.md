@@ -1,3 +1,7 @@
+# Secret-Shift Project Glossary & Conventions
+
+See [CONTEXT.md](./CONTEXT.md) for domain terminology.
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
