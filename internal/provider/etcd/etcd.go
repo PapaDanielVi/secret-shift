@@ -91,13 +91,13 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 
 	var result []provider.Secret
 	for _, kv := range resp.Kvs {
-		name := strings.TrimPrefix(string(kv.Key), p.prefix)
+		name := strings.TrimPrefix(string(kv.GetKey()), p.prefix)
 		if name == "" {
-			name = string(kv.Key)
+			name = string(kv.GetKey())
 		}
 		result = append(result, provider.Secret{
 			Name:  name,
-			Value: string(kv.Value),
+			Value: string(kv.GetKey()),
 			Type:  "env",
 		})
 	}
