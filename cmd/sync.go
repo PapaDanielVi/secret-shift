@@ -134,24 +134,30 @@ func runCron(ctx context.Context, p *pipeline.Pipeline, expr string) error {
 func runServer(ctx context.Context, p *pipeline.Pipeline, _ *config.Config, port int) error {
 	health := server.NewHealthServer(port)
 
-	// Start periodic sync in background
-	go func() {
-		ticker := time.NewTicker(defaultSyncFrequency)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				if err := p.Run(ctx); err != nil {
-					health.ReportSyncError(err)
-				} else {
-					health.ReportSyncSuccess()
-				}
-			}
-		}
-	}()
+	go runServerSync(ctx, p.Run, health)
 
 	return health.Start(ctx)
+}
+
+func runServerSync(ctx context.Context, run func(context.Context) error, health *server.HealthServer) {
+	report := func() {
+		if err := run(ctx); err != nil {
+			health.ReportSyncError(err)
+		} else {
+			health.ReportSyncSuccess()
+		}
+	}
+
+	report()
+
+	ticker := time.NewTicker(defaultSyncFrequency)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			report()
+		}
+	}
 }

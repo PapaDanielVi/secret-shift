@@ -89,7 +89,12 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list action secrets: %w", err)
 	}
-	secrets = append(secrets, actionSecrets...)
+	if len(actionSecrets) > 0 {
+		return nil, fmt.Errorf(
+			"GitHub Actions secret values cannot be read through the GitHub API; refusing to sync %d empty secret values",
+			len(actionSecrets),
+		)
+	}
 
 	variables, err := p.listVariables(ctx)
 	if err != nil {

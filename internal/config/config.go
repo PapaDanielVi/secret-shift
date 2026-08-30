@@ -17,41 +17,41 @@ const (
 
 // VaultConfig holds Vault-specific configuration.
 type VaultConfig struct {
-	VaultAddress string `json:"vault_address"`
-	VaultPath    string `json:"vault_path"`
-	VaultMount   string `json:"vault_mount"`
+	VaultAddress string `json:"vault_address" mapstructure:"vault_address"`
+	VaultPath    string `json:"vault_path" mapstructure:"vault_path"`
+	VaultMount   string `json:"vault_mount" mapstructure:"vault_mount"`
 }
 
 // EtcdConfig holds etcd-specific configuration.
 type EtcdConfig struct {
-	EtcdEndpoints []string `json:"etcd_endpoints"`
-	EtcdPrefix    string   `json:"etcd_prefix"`
-	EtcdUsername  string   `json:"etcd_username"`
-	EtcdPassword  string   `json:"etcd_password"`
+	EtcdEndpoints []string `json:"etcd_endpoints" mapstructure:"etcd_endpoints"`
+	EtcdPrefix    string   `json:"etcd_prefix" mapstructure:"etcd_prefix"`
+	EtcdUsername  string   `json:"etcd_username" mapstructure:"etcd_username"`
+	EtcdPassword  string   `json:"etcd_password" mapstructure:"etcd_password"`
 }
 
 // KubernetesConfig holds Kubernetes-specific configuration.
 type KubernetesConfig struct {
-	KubeNamespace  string `json:"kube_namespace"`
-	KubeSecretName string `json:"kube_secret_name"`
-	KubeConfig     string `json:"kube_config"`
-	KubeLabel      string `json:"kube_label"`
+	KubeNamespace  string `json:"kube_namespace" mapstructure:"kube_namespace"`
+	KubeSecretName string `json:"kube_secret_name" mapstructure:"kube_secret_name"`
+	KubeConfig     string `json:"kube_config" mapstructure:"kube_config"`
+	KubeLabel      string `json:"kube_label" mapstructure:"kube_label"`
 }
 
 // GitConfig holds GitHub/GitLab-specific configuration.
 type GitConfig struct {
-	Repo     string `json:"repo"`
-	TokenEnv string `json:"token_env"`
-	Token    string `json:"token"`
-	URL      string `json:"url"`
+	Repo     string `json:"repo" mapstructure:"repo"`
+	TokenEnv string `json:"token_env" mapstructure:"token_env"`
+	Token    string `json:"token" mapstructure:"token"`
+	URL      string `json:"url" mapstructure:"url"`
 }
 
 // FileConfig holds file-specific configuration.
 type FileConfig struct {
-	Path       string `json:"path"`
-	Format     string `json:"format"`
-	Encrypt    bool   `json:"encrypt"`
-	EncryptKey string `json:"encrypt_key"`
+	Path       string `json:"path" mapstructure:"path"`
+	Format     string `json:"format" mapstructure:"format"`
+	Encrypt    bool   `json:"encrypt" mapstructure:"encrypt"`
+	EncryptKey string `json:"encrypt_key" mapstructure:"encrypt_key"`
 }
 
 // Config is the top-level configuration.
@@ -64,37 +64,37 @@ type Config struct {
 
 // SourceConfig holds the source provider configuration.
 type SourceConfig struct {
-	GitConfig
-	VaultConfig
-	EtcdConfig
-	KubernetesConfig
-	FileConfig
+	GitConfig        `mapstructure:",squash"`
+	VaultConfig      `mapstructure:",squash"`
+	EtcdConfig       `mapstructure:",squash"`
+	KubernetesConfig `mapstructure:",squash"`
+	FileConfig       `mapstructure:",squash"`
 
 	Type      provider.Type `json:"type"`
-	ProjectID string        `json:"project_id"`
+	ProjectID string        `json:"project_id" mapstructure:"project_id"`
 }
 
 // ProcessConfig holds the processing/filtering configuration.
 type ProcessConfig struct {
-	AddPrefix    string   `json:"add_prefix"`
-	AddSuffix    string   `json:"add_suffix"`
-	IncludeRegex string   `json:"include_regex"`
-	ExcludeRegex string   `json:"exclude_regex"`
-	IncludeTypes []string `json:"include_types"`
-	ExcludeTypes []string `json:"exclude_types"`
+	AddPrefix    string   `json:"add_prefix" mapstructure:"add_prefix"`
+	AddSuffix    string   `json:"add_suffix" mapstructure:"add_suffix"`
+	IncludeRegex string   `json:"include_regex" mapstructure:"include_regex"`
+	ExcludeRegex string   `json:"exclude_regex" mapstructure:"exclude_regex"`
+	IncludeTypes []string `json:"include_types" mapstructure:"include_types"`
+	ExcludeTypes []string `json:"exclude_types" mapstructure:"exclude_types"`
 }
 
 // DestinationConfig holds the destination provider configuration.
 type DestinationConfig struct {
-	GitConfig
-	VaultConfig
-	EtcdConfig
-	KubernetesConfig
-	FileConfig
+	GitConfig        `mapstructure:",squash"`
+	VaultConfig      `mapstructure:",squash"`
+	EtcdConfig       `mapstructure:",squash"`
+	KubernetesConfig `mapstructure:",squash"`
+	FileConfig       `mapstructure:",squash"`
 
 	Type             provider.Type `json:"type"`
-	ConflictStrategy string        `json:"conflict_strategy"`
-	ProjectID        string        `json:"project_id"`
+	ConflictStrategy string        `json:"conflict_strategy" mapstructure:"conflict_strategy"`
+	ProjectID        string        `json:"project_id" mapstructure:"project_id"`
 }
 
 // Load reads configuration from file and environment.
