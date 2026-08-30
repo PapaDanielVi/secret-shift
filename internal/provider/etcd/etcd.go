@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/PapaDanielVi/secret-shift/internal/provider"
+	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -40,8 +41,11 @@ func getString(opts map[string]any, key string) string {
 }
 
 func getStringSlice(opts map[string]any, key string) []string {
-	if v, ok := opts[key]; ok {
-		if arr, ok := v.([]any); ok {
+	if value, ok := opts[key]; ok {
+		switch arr := value.(type) {
+		case []string:
+			return arr
+		case []any:
 			result := make([]string, 0, len(arr))
 			for _, item := range arr {
 				if s, ok := item.(string); ok {
@@ -89,20 +93,24 @@ func (p *Provider) Read(ctx context.Context) ([]provider.Secret, error) {
 		return nil, fmt.Errorf("read from etcd with prefix %s: %w", p.prefix, err)
 	}
 
-	var result []provider.Secret
-	for _, kv := range resp.Kvs {
-		name := strings.TrimPrefix(string(kv.GetKey()), p.prefix)
+	return secretsFromKVs(resp.Kvs, p.prefix), nil
+}
+
+func secretsFromKVs(kvs []*mvccpb.KeyValue, prefix string) []provider.Secret {
+	result := make([]provider.Secret, 0, len(kvs))
+	for _, kv := range kvs {
+		name := strings.TrimPrefix(string(kv.GetKey()), prefix)
 		if name == "" {
 			name = string(kv.GetKey())
 		}
 		result = append(result, provider.Secret{
 			Name:  name,
-			Value: string(kv.GetKey()),
+			Value: string(kv.GetValue()),
 			Type:  "env",
 		})
 	}
 
-	return result, nil
+	return result
 }
 
 func (p *Provider) Write(ctx context.Context, secrets []provider.Secret) error {

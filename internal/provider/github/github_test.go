@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v68/github"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupMockServer(secretNames []string, variables []*github.ActionsVariable) *httptest.Server {
@@ -55,40 +57,21 @@ func newTestProvider(t *testing.T, serverURL string) *Provider {
 	return p
 }
 
-func TestRead_SecretsAndVariables(t *testing.T) {
+func TestRead_MultipleVariables(t *testing.T) {
 	vars := []*github.ActionsVariable{
 		{Name: "DEPLOY_ENV", Value: "production"},
 		{Name: "LOG_LEVEL", Value: "info"},
 	}
-	server := setupMockServer([]string{"API_KEY", "DB_PASSWORD"}, vars)
+	server := setupMockServer(nil, vars)
 	defer server.Close()
 
 	p := newTestProvider(t, server.URL)
 
 	secrets, err := p.Read(context.Background())
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if len(secrets) != 4 {
-		t.Fatalf("expected 4 secrets, got %d", len(secrets))
-	}
-
-	secretCount := 0
-	envCount := 0
+	require.NoError(t, err)
+	require.Len(t, secrets, 2)
 	for _, s := range secrets {
-		if s.Type == "secret" {
-			secretCount++
-		}
-		if s.Type == "env" {
-			envCount++
-		}
-	}
-	if secretCount != 2 {
-		t.Errorf("expected 2 secrets, got %d", secretCount)
-	}
-	if envCount != 2 {
-		t.Errorf("expected 2 env vars, got %d", envCount)
+		assert.Equal(t, "env", s.Type)
 	}
 }
 
@@ -105,6 +88,19 @@ func TestRead_Empty(t *testing.T) {
 	if len(secrets) != 0 {
 		t.Fatalf("expected 0 secrets, got %d", len(secrets))
 	}
+}
+
+func TestRead_RejectsUnreadableSecretValues(t *testing.T) {
+	t.Parallel()
+
+	server := setupMockServer([]string{"API_KEY"}, nil)
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	secrets, err := p.Read(context.Background())
+
+	require.ErrorContains(t, err, "GitHub Actions secret values cannot be read")
+	assert.Nil(t, secrets)
 }
 
 func TestRead_VariableValues(t *testing.T) {

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/PapaDanielVi/secret-shift/internal/provider"
@@ -8,6 +10,60 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestLoad_UnmarshalsEmbeddedProviderFields(t *testing.T) {
+	t.Parallel()
+
+	configPath := filepath.Join(t.TempDir(), "secret-shift.json")
+	configJSON := `{
+		"source": {
+			"type": "file",
+			"repo": "owner/repo",
+			"project_id": "project-1",
+			"vault_address": "https://vault.example.com",
+			"etcd_endpoints": ["https://etcd.example.com"],
+			"kube_namespace": "production",
+			"path": "/tmp/input.json",
+			"format": "json",
+			"encrypt": true,
+			"encrypt_key": "source-key"
+		},
+		"process": {
+			"add_prefix": "PROD_",
+			"include_types": ["env"]
+		},
+		"destination": {
+			"type": "file",
+			"conflict_strategy": "skip",
+			"path": "/tmp/output.yaml",
+			"format": "yaml",
+			"encrypt": true,
+			"encrypt_key": "destination-key"
+		}
+	}`
+	require.NoError(t, os.WriteFile(configPath, []byte(configJSON), 0600))
+
+	cfg, err := Load(viper.New(), configPath)
+	require.NoError(t, err)
+	assert.Equal(t, provider.File, cfg.Source.Type)
+	assert.Equal(t, "owner/repo", cfg.Source.Repo)
+	assert.Equal(t, "project-1", cfg.Source.ProjectID)
+	assert.Equal(t, "https://vault.example.com", cfg.Source.VaultAddress)
+	assert.Equal(t, []string{"https://etcd.example.com"}, cfg.Source.EtcdEndpoints)
+	assert.Equal(t, "production", cfg.Source.KubeNamespace)
+	assert.Equal(t, "/tmp/input.json", cfg.Source.Path)
+	assert.Equal(t, "json", cfg.Source.Format)
+	assert.True(t, cfg.Source.Encrypt)
+	assert.Equal(t, "source-key", cfg.Source.EncryptKey)
+	assert.Equal(t, "PROD_", cfg.Process.AddPrefix)
+	assert.Equal(t, []string{"env"}, cfg.Process.IncludeTypes)
+	assert.Equal(t, provider.File, cfg.Destination.Type)
+	assert.Equal(t, "skip", cfg.Destination.ConflictStrategy)
+	assert.Equal(t, "/tmp/output.yaml", cfg.Destination.Path)
+	assert.Equal(t, "yaml", cfg.Destination.Format)
+	assert.True(t, cfg.Destination.Encrypt)
+	assert.Equal(t, "destination-key", cfg.Destination.EncryptKey)
+}
 
 func newTestConfig(t *testing.T, cfg *Config) *Config {
 	t.Helper()

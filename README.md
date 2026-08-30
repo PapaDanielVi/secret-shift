@@ -15,7 +15,7 @@ See [CONTEXT.md](./CONTEXT.md) for domain terminology and conventions.
 
 ## Features
 
-- **7 provider types:** GitHub, GitLab, Vault, etcd, Kubernetes, local file (source + destination)
+- **6 provider types:** GitHub, GitLab, Vault, etcd, Kubernetes, local file (source + destination)
 - **Flexible processing:** Filter by name regex or type, add prefixes/suffixes to secret names
 - **Multiple run modes:** One-shot, periodic interval, cron-scheduled, or long-running server
 - **Server mode:** HTTP health endpoints (`/healthz`, `/readyz`, `/status`) for Kubernetes deployments
@@ -152,12 +152,14 @@ Print the current version.
 
 | Source         | What it reads                                            |
 | -------------- | -------------------------------------------------------- |
-| **github**     | GitHub Actions secrets + environment variables           |
+| **github**     | GitHub Actions variables; rejects unreadable secret values |
 | **gitlab**     | GitLab project-level CI/CD variables                     |
 | **vault**      | HashiCorp Vault KV v2 secrets                            |
 | **etcd**       | etcd key-value pairs under a prefix                      |
 | **kubernetes** | K8s Secrets + ConfigMaps (by name, label, or namespace)  |
 | **file**       | Local JSON or YAML key-value file (optionally encrypted) |
+
+GitHub's API returns Actions secret names but never their values. To prevent overwriting destinations with empty values, a GitHub source fails when repository secrets are present. GitHub Actions variables remain readable and can be synced normally.
 
 ## Destinations
 
